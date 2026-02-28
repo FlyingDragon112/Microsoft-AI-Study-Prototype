@@ -17,7 +17,7 @@ doc_client = DocumentIntelligenceClient(endpoint, AzureKeyCredential(key))
 
 def get_document_text(filepath,doc_client):
     text = ""
-    with open(r"Docs\Paper Iteration 3.pdf", "rb") as f:
+    with open(filepath, "rb") as f:
         poller = doc_client.begin_analyze_document(
             model_id="prebuilt-read",     
             body=f,

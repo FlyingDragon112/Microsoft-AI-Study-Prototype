@@ -13,18 +13,23 @@
    cd Microsoft Hack/backend
    ```
 
-2. **Create and activate a virtual environment**  
+2. **Update your local repository**  
+    ```
+    git pull origin main
+    ```
+
+3. **Create and activate a virtual environment**  
    ```
    python -m venv venv
    venv\Scripts\activate   # On Windows
    ```
 
-3. **Install dependencies**  
+4. **Install dependencies**  
    ```
    pip install -r requirements.txt
    ```
 
-4. **Add environment variables**  
+5. **Add environment variables**  
    - Create a `.env` file in the `backend` folder.
    - Add your keys and endpoints:
      ```
@@ -33,7 +38,7 @@
      CHAT_API=your-chat-api-key
      ```
 
-5. **Run the main script**  
+6. **Run the main script**  
    ```
    python main_architecture.py
    ```

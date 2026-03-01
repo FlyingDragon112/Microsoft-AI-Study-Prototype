@@ -1,38 +1,157 @@
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+/* CrackIT Main Layout */
+.crackit-app {
+  background: #f8f8f8;
+  height: 100vh;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.crackit-header {
+  background: #d3d3d3;
+  padding: 0.7em 2em;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  font-size: 2em;
+  font-weight: 600;
+  border-bottom: 1px solid #bbb;
 }
 
-.App-link {
-  color: #61dafb;
+.crackit-logo {
+  width: 40px;
+  height: 40px;
+  background: #fff;
+  border: 2px solid #bbb;
+  border-radius: 6px;
+  margin-right: 1em;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.crackit-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.crackit-sidebar {
+  width: 200px;
+  background: #eaeaea;
+  border-right: 1px solid #ccc;
+  padding: 1em 0.5em;
+  display: flex;
+  flex-direction: column;
+}
+
+.crackit-sidebar-header {
+  background: #b0b0b0;
+  color: #222;
+  font-weight: 500;
+  padding: 0.7em 1em;
+  border-radius: 8px 8px 0 0;
+  margin-bottom: 1em;
+  font-size: 1.1em;
+}
+
+.crackit-content {
+  flex: 1;
+  background: #ededed;
+  padding: 2em 2em 1em 2em;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.crackit-content-header {
+  background: #b0b0b0;
+  color: #222;
+  font-weight: 500;
+  padding: 0.7em 1em;
+  border-radius: 8px 8px 0 0;
+  margin-bottom: 1em;
+  font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.crackit-chatbox {
+  flex: 1;
+  background: #f3f3f3;
+  border-radius: 12px;
+  padding: 1.5em 1em 1em 1em;
+  box-shadow: 0 2px 12px #0001;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.crackit-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 1em;
+  padding-right: 0.5em;
+}
+
+.crackit-chat-bubble {
+  margin-bottom: 1.2em;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.crackit-chat-bubble.user {
+  align-items: flex-end;
+}
+
+.crackit-chat-bubble-content {
+  background: #fff;
+  color: #222;
+  border-radius: 16px;
+  padding: 1em 1.2em;
+  max-width: 70%;
+  font-size: 1.08em;
+  box-shadow: 0 2px 8px #0002;
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: 16px;
+}
+
+.crackit-chat-bubble.bot .crackit-chat-bubble-content {
+  background: #e0e7ff;
+  color: #222;
+  border-bottom-right-radius: 16px;
+  border-bottom-left-radius: 4px;
+}
+
+.crackit-chat-input-row {
+  display: flex;
+  gap: 0.5em;
+  padding: 0.5em 0;
+  flex-shrink: 0;
+}
+
+.crackit-chat-input {
+  flex: 1;
+  padding: 1em;
+  border-radius: 8px;
+  border: 1px solid #bbb;
+  background: #fff;
+  color: #222;
+  font-size: 1em;
+}
+
+.crackit-chat-send-btn {
+  padding: 0.9em 1.5em;
+  border-radius: 8px;
+  border: none;
+  background: #4f46e5;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1em;
+  box-shadow: 0 2px 8px #0002;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.crackit-chat-send-btn:hover {
+  background: #3730a3;
 }

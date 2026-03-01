@@ -1,84 +1,104 @@
-# Microsoft Hack Backend Setup
+# CrackIT — AI-Powered Study Assistant
+
+CrackIT is an AI-powered study assistant that helps students understand textbook content through an interactive chat interface. Upload PDF documents, ask questions, and get detailed explanations with full LaTeX math rendering.
+
+## Tech Stack
+
+- **Frontend:** React 19, React Markdown, KaTeX (math rendering)
+- **Backend:** FastAPI, LangChain, OpenAI, Azure Document Intelligence
+- **Languages:** JavaScript, Python
+
+## Project Structure
+
+```
+Microsoft Hack/
+├── backend/
+│   ├── api_main.py            # FastAPI server
+│   ├── main_architecture.py   # Document processing & LLM setup
+│   ├── create_book_db.py      # Book database creation
+│   ├── books/                 # Book data
+│   └── .env                   # Environment variables (not committed)
+├── frontend/
+│   ├── src/
+│   │   ├── App.js             # Main React app with chat UI
+│   │   └── App.css            # Styling
+│   └── public/
+├── Docs/                      # PDF documents for analysis
+├── requirements.txt           # Python dependencies
+└── README.md
+```
 
 ## Prerequisites
 
 - Python 3.8+
-- pip
+- Node.js 16+
+- npm
 
-## Setup Instructions
+## Setup
 
-1. **Clone the repository**  
-   ```
-   git clone https://github.com/FlyingDragon112/microsoft-ai-study.git
-   cd Microsoft Hack/backend
-   ```
+### 1. Clone the repository
 
-2. **Update your local repository**  
-    ```
-    git pull origin main
-    ```
+```bash
+git clone https://github.com/FlyingDragon112/microsoft-ai-study.git
+cd "Microsoft Hack"
+```
 
-3. **Create and activate a virtual environment**  
-   ```
-   python -m venv venv
-   venv\Scripts\activate   # On Windows
-   ```
+### 2. Backend setup
 
-4. **Install dependencies**  
-   ```
-   pip install -r requirements.txt
-   ```
+```bash
+cd backend
+python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # macOS/Linux
+pip install -r ../requirements.txt
+```
 
-5. **Add environment variables**  
-   - Create a `.env` file in the `backend` folder.
-   - Add your keys and endpoints:
-     ```
-     DOC_ENDPOINT=your-doc-endpoint-url
-     DOC_KEY=your-doc-key
-     CHAT_API=your-chat-api-key
-     ```
+Create a `.env` file in the `backend/` folder:
 
-6. **Run the main script**  
-   ```
-   python main_architecture.py
-   ```
+```
+DOC_ENDPOINT=your-doc-endpoint-url
+DOC_KEY=your-doc-key
+CHAT_API=your-chat-api-key
+```
 
-7. **Run the FastAPI backend**  
-   ```
-   uvicorn backend.api_main:app --reload
-   ```
+Start the backend:
 
-The FastAPI backend will be available at http://localhost:8000
+```bash
+uvicorn api_main:app --reload
+```
 
-### FastAPI Endpoints
+The API will be available at http://localhost:8000
 
-- `GET /health` — Health check
-- `POST /analyze-document/` — Upload and analyze a PDF document
-- `POST /chat/` — Query the AI model
+### 3. Frontend setup
 
-## Frontend Setup (React)
+```bash
+cd frontend
+npm install
+npm start
+```
 
-1. **Navigate to the project root**
-   ```
-   cd .. # if you are in backend
-   cd "C:\Users\Arnav Agarwal\Desktop\Microsoft Hack"
-   ```
+The app will be available at http://localhost:3000
 
-2. **Create React app**
-   ```
-   npx create-react-app frontend
-   ```
+## API Endpoints
 
-3. **Start the React development server**
-   ```
-   cd frontend
-   npm start
-   ```
+| Method | Endpoint              | Description                        |
+|--------|-----------------------|------------------------------------|
+| GET    | `/health`             | Health check                       |
+| POST   | `/analyze-document/`  | Upload and analyze a PDF document  |
+| POST   | `/chat/`              | Send a query to the AI model       |
 
-The React app will run at http://localhost:3000
+## Features
+
+- Interactive chat interface with message history
+- PDF document upload and analysis via Azure Document Intelligence
+- AI-powered responses using LangChain + OpenAI
+- LaTeX math rendering with KaTeX (supports `$...$`, `$$...$$`, `\[...\]`, `\(...\)`)
+- Markdown formatting in responses (code blocks, lists, tables, etc.)
+- Auto-scrolling chat with internal scroll (no page scroll)
+- Source Library sidebar for managing study materials
 
 ## Notes
 
-- Place your PDF files in the `Docs` folder.
-- Make sure your `.env` file is in the same folder as `main_architecture.py`.
- - FastAPI backend endpoints are available at http://localhost:8000
+- Place PDF files in the `Docs/` folder for analysis.
+- Ensure `.env` is configured before starting the backend.
+- Both frontend and backend must be running simultaneously.

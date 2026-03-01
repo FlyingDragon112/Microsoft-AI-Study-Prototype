@@ -1,3 +1,4 @@
 /.env
 Docs
 /backend/books
+node_modules

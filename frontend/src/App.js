@@ -4,6 +4,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import Timer from './Timer';
+import TodoList from "./TodoList";
 
 function ChatBox({ messages, onSend }) {
   const [input, setInput] = useState("");
@@ -87,7 +89,24 @@ function App() {
       </div>
       <div className="crackit-main">
         <div className="crackit-sidebar">
-          <div className="crackit-sidebar-header">Source Library</div>
+          <div className="crackit-sidebar-header">Your Documents</div>
+           <div className="crackit-sidebar-upload">
+             <input
+               type="file"
+               id="source-upload"
+               style={{ display: 'none' }}
+               onChange={e => {
+                 const file = e.target.files[0];
+                 if (file) {
+                   // TODO: Add upload logic here
+                   alert(`Selected file: ${file.name}`);
+                 }
+               }}
+             />
+             <label htmlFor="source-upload" className="crackit-upload-btn">
+               + Add File
+             </label>
+           </div>
           {/* Add source library content here */}
         </div>
         <div className="crackit-content">
@@ -96,6 +115,11 @@ function App() {
             {/* Add dropdown or controls here if needed */}
           </div>
           <ChatBox messages={messages} onSend={handleChat} />
+        </div>
+        <div className="crackit-tools">
+          <div className="crackit-tools-header">Tools</div>
+          <Timer />
+          <TodoList />
         </div>
       </div>
     </div>

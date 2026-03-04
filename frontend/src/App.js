@@ -8,7 +8,20 @@ import Timer from './Timer';
 import TodoList from "./TodoList";
 
 function ChatBox({ messages, onSend }) {
+    // Text-to-speech handler
+    const handleTextToSpeech = async (text) => {
+      try {
+        await fetch('http://localhost:8000/text-to-speech/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+      } catch (err) {
+        alert("Text-to-speech failed.");
+      }
+    };
   const [input, setInput] = useState("");
+  const [listening, setListening] = useState(false);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -24,6 +37,24 @@ function ChatBox({ messages, onSend }) {
     }
   };
 
+  // Speech-to-text handler
+  const handleSpeechToText = async () => {
+    setListening(true);
+    try {
+      const res = await fetch('http://localhost:8000/speech-to-text/', {
+        method: 'POST'
+      });
+      const data = await res.json();
+      if (data.text) {
+        setInput(data.text);
+      }
+    } catch (err) {
+      alert("Speech recognition failed.");
+    } finally {
+      setListening(false);
+    }
+  };
+
   return (
     <div className="crackit-chatbox">
       <div className="crackit-chat-messages">
@@ -35,6 +66,15 @@ function ChatBox({ messages, onSend }) {
                 remarkPlugins={[remarkMath]}
                 rehypePlugins={[rehypeKatex]}
               />
+              {msg.role === 'bot' && (
+                <button
+                  style={{ marginLeft: 8, fontSize: 18 }}
+                  title="Text to Speech"
+                  onClick={() => handleTextToSpeech(msg.text)}
+                >
+                  🔊
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -50,7 +90,19 @@ function ChatBox({ messages, onSend }) {
           onKeyDown={e => { if (e.key === 'Enter') handleSend(); }}
         />
         <button className="crackit-chat-send-btn" onClick={handleSend}>Send</button>
+        <button
+          className="crackit-chat-speech-btn"
+          onClick={handleSpeechToText}
+          title="Speech to Text"
+          style={{ marginLeft: 8, background: listening ? '#ffcccc' : undefined }}
+          disabled={listening}
+        >
+          {listening ? '🔴 Listening...' : '🎤'}
+        </button>
       </div>
+      {listening && (
+        <div style={{ color: 'red', marginTop: 4, fontWeight: 'bold' }}>Microphone is open, speak now...</div>
+      )}
     </div>
   );
 }

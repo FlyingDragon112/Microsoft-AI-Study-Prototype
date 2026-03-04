@@ -41,18 +41,25 @@ def get_handwritten_text(filepath_handwritten_doc_client=handwritten_doc_client)
 def get_video_context(filepath,vid_client = vid_client):
     pass
 
-def get_speech_input(speech_input_client=speech_input_client): # async ig
+def get_speech_input(speech_input_client=speech_input_client):
     pass 
+
+SYSTEM_PROMPT = (
+    "You are a helpful math tutor. When explaining solutions, "
+    "format your response in plain text. Do NOT use LaTeX, dollar signs ($), "
+    "\\boxed{}, or any math markup. Use simple notation like: "
+    "x^2 for exponents, sqrt() for square roots, and write fractions as a/b. "
+    "Use clear step-by-step formatting with numbered steps."
+    "Clearly mark end of lines with '\n'"   
+)
 
 llm = None
 try:
     llm = ChatOpenAI(
         base_url="https://models.github.ai/inference",
         model="openai/gpt-4.1",
-        api_key= os.getenv("CHAT_API") 
+        api_key=os.getenv("CHAT_API"),
     )
     logging.info("Model Working")
-except:
-    logging.info("Model expired: Switch Model or Key")
-
-llm.invoke("how r u?")
+except Exception as e:
+    logging.info(f"Model expired: Switch Model or Key. Error: {e}")

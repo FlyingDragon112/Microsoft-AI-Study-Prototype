@@ -215,9 +215,9 @@ function App() {
           </div>
           <div className="crackit-tools-body">
             <div style={{ height: 10 }} />
-            <TodoList />
-            <div style={{ height: 15 }} />
             <Timer />
+            <div style={{ height: 15 }} />
+            <TodoList />
           </div>
         </div>
       </div>

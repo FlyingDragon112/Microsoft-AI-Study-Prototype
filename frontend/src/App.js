@@ -8,18 +8,18 @@ import Timer from './Timer';
 import TodoList from "./TodoList";
 
 function ChatBox({ messages, onSend }) {
-    // Text-to-speech handler
-    const handleTextToSpeech = async (text) => {
-      try {
-        await fetch('http://localhost:8000/text-to-speech/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
-        });
-      } catch (err) {
-        alert("Text-to-speech failed.");
-      }
-    };
+  const handleTextToSpeech = async (text) => {
+    try {
+      await fetch('http://localhost:8000/text-to-speech/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+    } catch (err) {
+      alert("Text-to-speech failed.");
+    }
+  };
+
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
   const chatEndRef = useRef(null);
@@ -37,7 +37,6 @@ function ChatBox({ messages, onSend }) {
     }
   };
 
-  // Speech-to-text handler
   const handleSpeechToText = async () => {
     setListening(true);
     try {
@@ -66,16 +65,21 @@ function ChatBox({ messages, onSend }) {
                 remarkPlugins={[remarkMath]}
                 rehypePlugins={[rehypeKatex]}
               />
-              {msg.role === 'bot' && (
+            </div>
+            {msg.role === 'bot' && (
+              <div className="crackit-bot-actions">
                 <button
-                  style={{ marginLeft: 8, fontSize: 18 }}
+                  className="crackit-bot-action-btn"
                   title="Text to Speech"
                   onClick={() => handleTextToSpeech(msg.text)}
                 >
                   🔊
                 </button>
-              )}
-            </div>
+                <button className="crackit-bot-action-btn" title="Bookmark">
+                  🔖
+                </button>
+              </div>
+            )}
           </div>
         ))}
         <div ref={chatEndRef} />
@@ -86,22 +90,19 @@ function ChatBox({ messages, onSend }) {
           className="crackit-chat-input"
           value={input}
           onChange={e => setInput(e.target.value)}
-          placeholder="Type your message..."
+          placeholder="Start studying...."
           onKeyDown={e => { if (e.key === 'Enter') handleSend(); }}
         />
-        <button className="crackit-chat-send-btn" onClick={handleSend}>Send</button>
         <button
-          className="crackit-chat-speech-btn"
-          onClick={handleSpeechToText}
-          title="Speech to Text"
-          style={{ marginLeft: 8, background: listening ? '#ffcccc' : undefined }}
-          disabled={listening}
+          className="crackit-chat-attach-btn"
+          title="Attach file"
         >
-          {listening ? '🔴 Listening...' : '🎤'}
+          📎
         </button>
+        <button className="crackit-chat-send-btn" onClick={handleSend}>→</button>
       </div>
       {listening && (
-        <div style={{ color: 'red', marginTop: 4, fontWeight: 'bold' }}>Microphone is open, speak now...</div>
+        <div className="crackit-listening-msg">Microphone is open, speak now...</div>
       )}
     </div>
   );
@@ -109,6 +110,20 @@ function ChatBox({ messages, onSend }) {
 
 function App() {
   const [messages, setMessages] = useState([]);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setUploadedFiles(prev => [...prev, { name: file.name, checked: true }]);
+    }
+  };
+
+  const toggleFileCheck = (idx) => {
+    setUploadedFiles(prev =>
+      prev.map((f, i) => i === idx ? { ...f, checked: !f.checked } : f)
+    );
+  };
 
   const handleChat = async (query) => {
     setMessages(prev => [...prev, { role: 'user', text: query }]);
@@ -135,43 +150,75 @@ function App() {
 
   return (
     <div className="crackit-app">
+      {/* Header */}
       <div className="crackit-header">
-        <div className="crackit-logo" />
-        CrackIT
-      </div>
-      <div className="crackit-main">
-        <div className="crackit-sidebar">
-          <div className="crackit-sidebar-header">Your Documents</div>
-           <div className="crackit-sidebar-upload">
-             <input
-               type="file"
-               id="source-upload"
-               style={{ display: 'none' }}
-               onChange={e => {
-                 const file = e.target.files[0];
-                 if (file) {
-                   // TODO: Add upload logic here
-                   alert(`Selected file: ${file.name}`);
-                 }
-               }}
-             />
-             <label htmlFor="source-upload" className="crackit-upload-btn">
-               + Add File
-             </label>
-           </div>
-          {/* Add source library content here */}
+        <div className="crackit-header-left">
+          <div className="crackit-logo">📚</div>
+          <span className="crackit-header-title">CrackIT</span>
         </div>
+        <nav className="crackit-header-nav">
+          <button className="crackit-header-nav-link">Notes</button>
+          <button className="crackit-header-nav-link">Meditate</button>
+          <button className="crackit-header-nav-link">Analytics</button>
+          <div className="crackit-header-profile">👤</div>
+        </nav>
+      </div>
+
+      <div className="crackit-main">
+        {/* Left Sidebar */}
+        <div className="crackit-sidebar">
+          <div className="crackit-sidebar-header">
+            <span>Your Learning Material</span>
+            <button className="crackit-panel-collapse-btn">Add Icon</button>
+          </div>
+          <div className="crackit-sidebar-upload">
+            <input
+              type="file"
+              id="source-upload"
+              style={{ display: 'none' }}
+              onChange={handleFileUpload}
+            />
+            <label htmlFor="source-upload" className="crackit-upload-btn">
+              + Add Source
+            </label>
+          </div>
+          <div className="crackit-sidebar-files">
+            {uploadedFiles.map((file, idx) => (
+              <div key={idx} className="crackit-sidebar-file">
+                <span className="crackit-sidebar-file-icon">📄</span>
+                <span className="crackit-sidebar-file-name">{file.name}</span>
+                <input
+                  type="checkbox"
+                  className="crackit-sidebar-file-check"
+                  checked={file.checked}
+                  onChange={() => toggleFileCheck(idx)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Center Content */}
         <div className="crackit-content">
           <div className="crackit-content-header">
-            Explanation Mode
-            {/* Add dropdown or controls here if needed */}
+            <span className="crackit-content-header-dropdown">
+              Explanation Mode <span className="arrow">▾</span>
+            </span>
           </div>
           <ChatBox messages={messages} onSend={handleChat} />
         </div>
+
+        {/* Right Tools Panel */}
         <div className="crackit-tools">
-          <div className="crackit-tools-header">Tools</div>
-          <Timer />
-          <TodoList />
+          <div className="crackit-tools-header">
+            <span>Tools</span>
+          </div>
+          <div className="crackit-tools-body">
+            <div style={{ height: 10 }} />
+            <TodoList />
+            <div style={{ height: 15 }} />
+            <Timer />
+          </div>
         </div>
       </div>
     </div>

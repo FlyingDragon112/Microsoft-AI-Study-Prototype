@@ -1,67 +1,40 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-function TimerSegment({ value, onChange, max, disabled }) {
-  const inputRef = useRef(null);
-  const [editing, setEditing] = useState(false);
-  const [editVal, setEditVal] = useState('');
-  const pad = n => String(n).padStart(2, '0');
+const DEFAULT_HOURS = 0;
+const DEFAULT_MINUTES = 25;
+const DEFAULT_SECONDS = 0;
 
-  const startEdit = () => {
-    if (disabled) return;
-    setEditVal(pad(value));
-    setEditing(true);
-    setTimeout(() => inputRef.current?.select(), 0);
-  };
-
-  const apply = () => {
-    let v = Math.max(0, Math.min(max, parseInt(editVal) || 0));
-    onChange(v);
-    setEditing(false);
-  };
-
-  if (editing) {
-    return (
-      <input
-        ref={inputRef}
-        className="crackit-timer-segment crackit-timer-segment-edit"
-        value={editVal}
-        onChange={e => setEditVal(e.target.value.replace(/\D/g, '').slice(0, 2))}
-        onBlur={apply}
-        onKeyDown={e => { if (e.key === 'Enter') apply(); }}
-        autoFocus
-      />
-    );
-  }
-  return (
-    <span className="crackit-timer-segment" onClick={startEdit} title="Click to edit">
-      {pad(value)}
-    </span>
-  );
+function pad(n) {
+  return String(n).padStart(2, '0');
 }
 
 function Timer() {
-  const [hours, setHours] = useState(0);
-  const [minutes, setMinutes] = useState(25);
-  const [seconds, setSeconds] = useState(0);
+  const [hours, setHours] = useState(DEFAULT_HOURS);
+  const [minutes, setMinutes] = useState(DEFAULT_MINUTES);
+  const [seconds, setSeconds] = useState(DEFAULT_SECONDS);
   const [isRunning, setIsRunning] = useState(false);
+  const [editing, setEditing] = useState(null); // 'h' | 'm' | 's' | null
+  const [editVal, setEditVal] = useState('');
   const intervalRef = useRef(null);
+
+  // Calculate total and remaining seconds
+  const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+  const [remaining, setRemaining] = useState(totalSeconds);
+
+  // Sync remaining when time fields change and not running
+  useEffect(() => {
+    if (!isRunning) setRemaining(hours * 3600 + minutes * 60 + seconds);
+    // eslint-disable-next-line
+  }, [hours, minutes, seconds]);
 
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = setInterval(() => {
-        setSeconds(prev => {
+        setRemaining(prev => {
           if (prev > 0) return prev - 1;
-          setMinutes(m => {
-            if (m > 0) return m - 1;
-            setHours(h => {
-              if (h > 0) return h - 1;
-              clearInterval(intervalRef.current);
-              setIsRunning(false);
-              return 0;
-            });
-            return m > 0 ? 59 : 59;
-          });
-          return 59;
+          clearInterval(intervalRef.current);
+          setIsRunning(false);
+          return 0;
         });
       }, 1000);
     } else {
@@ -70,36 +43,189 @@ function Timer() {
     return () => clearInterval(intervalRef.current);
   }, [isRunning]);
 
+  // When timer finishes, update fields
   useEffect(() => {
-    if (!isRunning) return;
-    const total = hours * 3600 + minutes * 60 + seconds;
-    if (total <= 0) {
-      setIsRunning(false);
-      clearInterval(intervalRef.current);
+    if (!isRunning && remaining !== hours * 3600 + minutes * 60 + seconds) {
+      setHours(Math.floor(remaining / 3600));
+      setMinutes(Math.floor((remaining % 3600) / 60));
+      setSeconds(remaining % 60);
     }
-  }, [hours, minutes, seconds, isRunning]);
+    // eslint-disable-next-line
+  }, [remaining, isRunning]);
 
+  // Compute display values from remaining for real-time update
+  const displayHours = Math.floor(remaining / 3600);
+  const displayMinutes = Math.floor((remaining % 3600) / 60);
+  const displaySeconds = remaining % 60;
+
+  const handleStart = () => {
+    if (!isRunning && remaining > 0) setIsRunning(true);
+  };
+  const handleStop = () => {
+    setIsRunning(false);
+  };
   const handleReset = () => {
     setIsRunning(false);
-    setHours(0);
-    setMinutes(25);
-    setSeconds(0);
+    setHours(DEFAULT_HOURS);
+    setMinutes(DEFAULT_MINUTES);
+    setSeconds(DEFAULT_SECONDS);
+    setRemaining(DEFAULT_HOURS * 3600 + DEFAULT_MINUTES * 60 + DEFAULT_SECONDS);
   };
 
+  // Inline edit handlers
+  const handleEdit = (type, val) => {
+    setEditing(type);
+    setEditVal(pad(val));
+  };
+  const handleEditChange = e => {
+    setEditVal(e.target.value.replace(/\D/g, '').slice(0, 2));
+  };
+  const handleEditBlur = () => {
+    let v = Math.max(0, Math.min(99, parseInt(editVal) || 0));
+    if (editing === 'h') setHours(v);
+    if (editing === 'm') setMinutes(Math.min(59, v));
+    if (editing === 's') setSeconds(Math.min(59, v));
+    setEditing(null);
+  };
+  const handleEditKey = e => {
+    if (e.key === 'Enter') handleEditBlur();
+  };
+
+  const progress = totalSeconds === 0 ? 0 : remaining / totalSeconds;
+
+  const CARD_W = 200;
+  const CARD_H = 106;
+  const STROKE = 2;
+  const RX = 8;
+  // Perimeter of the rounded rect (approx, ignoring corner arc difference)
+  const PERIMETER = 2 * (CARD_W - STROKE + CARD_H - STROKE);
+  const borderOffset = PERIMETER * (1 - progress);
+
   return (
-    <div className="crackit-timer">
-      <div className="crackit-timer-display">
-        <TimerSegment value={hours} onChange={setHours} max={99} disabled={isRunning} />
-        <span className="crackit-timer-colon">:</span>
-        <TimerSegment value={minutes} onChange={setMinutes} max={59} disabled={isRunning} />
-        <span className="crackit-timer-colon">:</span>
-        <TimerSegment value={seconds} onChange={setSeconds} max={59} disabled={isRunning} />
+    <div style={{
+      width: CARD_W, height: CARD_H, background: '#f2f6f9', borderRadius: 9,
+      boxShadow: '8px 8px 20px rgba(0,0,0,0.08), -6px -6px 15px rgba(255,255,255,0.8)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '16px 19px', margin: '0 auto', boxSizing: 'border-box',
+      position: 'relative'
+    }}>
+      {/* Rectangular border progress */}
+      <svg style={{ position: 'absolute', top: 0, left: 0, width: CARD_W, height: CARD_H, pointerEvents: 'none' }}>
+        <rect
+          x={STROKE / 2} y={STROKE / 2}
+          width={CARD_W - STROKE} height={CARD_H - STROKE}
+          rx={RX} ry={RX}
+          fill="transparent"
+          stroke="#d9e6f2"
+          strokeWidth={STROKE}
+        />
+        <rect
+          x={STROKE / 2} y={STROKE / 2}
+          width={CARD_W - STROKE} height={CARD_H - STROKE}
+          rx={RX} ry={RX}
+          fill="transparent"
+          stroke="#2f8cff"
+          strokeWidth={STROKE}
+          strokeDasharray={PERIMETER}
+          strokeDashoffset={borderOffset}
+          strokeLinecap="round"
+          style={{ transition: 'stroke-dashoffset 1s linear' }}
+        />
+      </svg>
+      <div style={{ fontSize: 8, letterSpacing: 2, color: '#6c7a89', marginBottom: 9, fontWeight: 600, zIndex: 1, position: 'relative' }}>TIMER</div>
+      <div style={{ fontSize: 25, fontWeight: 600, color: '#444', margin: '6px 0 12px 0', display: 'flex', alignItems: 'center', gap: 4, zIndex: 1, position: 'relative' }}>
+        {/* Editable Hours */}
+        {editing === 'h' ? (
+          <input
+            type="text"
+            value={editVal}
+            onChange={handleEditChange}
+            onBlur={handleEditBlur}
+            onKeyDown={handleEditKey}
+            style={{
+              width: 21, fontSize: 22, fontWeight: 600, textAlign: 'center', border: 'none', borderRadius: 5,
+              background: '#e6eef3', color: '#444', outline: '2px solid #2f8cff', marginRight: 1
+            }}
+            autoFocus
+          />
+        ) : (
+          <span
+            style={{ cursor: isRunning ? 'not-allowed' : 'pointer', borderRadius: 5, background: '#e6eef3', padding: '1px 5px', marginRight: 1 }}
+            onClick={() => !isRunning && handleEdit('h', displayHours)}
+            title="Edit hours"
+          >{pad(displayHours)}</span>
+        )}
+        <span>:</span>
+        {/* Editable Minutes */}
+        {editing === 'm' ? (
+          <input
+            type="text"
+            value={editVal}
+            onChange={handleEditChange}
+            onBlur={handleEditBlur}
+            onKeyDown={handleEditKey}
+            style={{
+              width: 21, fontSize: 22, fontWeight: 600, textAlign: 'center', border: 'none', borderRadius: 5,
+              background: '#e6eef3', color: '#444', outline: '2px solid #2f8cff', marginRight: 1
+            }}
+            autoFocus
+          />
+        ) : (
+          <span
+            style={{ cursor: isRunning ? 'not-allowed' : 'pointer', borderRadius: 5, background: '#e6eef3', padding: '1px 5px', marginRight: 1 }}
+            onClick={() => !isRunning && handleEdit('m', displayMinutes)}
+            title="Edit minutes"
+          >{pad(displayMinutes)}</span>
+        )}
+        <span>:</span>
+        {/* Editable Seconds */}
+        {editing === 's' ? (
+          <input
+            type="text"
+            value={editVal}
+            onChange={handleEditChange}
+            onBlur={handleEditBlur}
+            onKeyDown={handleEditKey}
+            style={{
+              width: 21, fontSize: 22, fontWeight: 600, textAlign: 'center', border: 'none', borderRadius: 5,
+              background: '#e6eef3', color: '#444', outline: '2px solid #2f8cff', marginRight: 1
+            }}
+            autoFocus
+          />
+        ) : (
+          <span
+            style={{ cursor: isRunning ? 'not-allowed' : 'pointer', borderRadius: 5, background: '#e6eef3', padding: '1px 5px', marginRight: 1 }}
+            onClick={() => !isRunning && handleEdit('s', displaySeconds)}
+            title="Edit seconds"
+          >{pad(displaySeconds)}</span>
+        )}
       </div>
-      <div className="crackit-timer-controls">
-        <button onClick={() => setIsRunning(r => !r)} className="crackit-timer-btn">
-          {isRunning ? 'Pause' : 'Start'}
-        </button>
-        <button onClick={handleReset} className="crackit-timer-btn">Reset</button>
+      <div style={{ display: 'flex', gap: 9, zIndex: 1, position: 'relative' }}>
+        {isRunning ? (
+          <button
+            onClick={handleStop}
+            style={{
+              padding: '5px 11px', fontSize: 10, border: 'none', borderRadius: 6, background: '#fff',
+              boxShadow: '3px 3px 8px rgba(0,0,0,0.1)', cursor: 'pointer', fontWeight: 500, transition: '0.2s'
+            }}
+          >STOP</button>
+        ) : (
+          <button
+            onClick={handleStart}
+            style={{
+              padding: '5px 11px', fontSize: 10, border: 'none', borderRadius: 6, background: '#fff',
+              boxShadow: '3px 3px 8px rgba(0,0,0,0.1)', cursor: 'pointer', fontWeight: 500, transition: '0.2s'
+            }}
+            disabled={remaining === 0}
+          >START</button>
+        )}
+        <button
+          onClick={handleReset}
+          style={{
+            padding: '5px 11px', fontSize: 10, border: 'none', borderRadius: 6, background: '#fff',
+            boxShadow: '3px 3px 8px rgba(0,0,0,0.1)', cursor: 'pointer', fontWeight: 500, transition: '0.2s'
+          }}
+        >RESET</button>
       </div>
     </div>
   );

@@ -58,12 +58,21 @@ class ContextWindow:
 
 context_window = ContextWindow(size=50)
 
+SYSTEM_PROMPT = (
+    "You are a helpful math tutor. When explaining solutions, "
+    "format your response in plain text. Do NOT use LaTeX, dollar signs ($), "
+    "\\boxed{}, or any math markup. Use simple notation like: "
+    "x^2 for exponents, sqrt() for square roots, and write fractions as a/b. "
+    "Use clear step-by-step formatting with numbered steps."
+    "Clearly mark end of lines with '\n'"   
+)
+
 @app.post("/chat/")
 async def chat(request: ChatRequest):
     context_window.add_message(f"User: {request.query}")
     context = context_window.get_context()
     messages = [
-        {"role": "system", "content": "Assistant is a large language model trained by OpenAI."}
+        {"role": "system", "content": SYSTEM_PROMPT}
     ]
     for msg in context_window.messages:
         if msg.startswith("User: "):

@@ -3,3 +3,4 @@ Docs
 /backend/books
 node_modules
 /papers
+/backend/__pycache__

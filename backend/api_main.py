@@ -2,7 +2,6 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
-from main_architecture import get_document_text
 from pydantic import BaseModel
 from Speech import recognize_from_microphone, convert_text_to_speech
 from fastapi import Request

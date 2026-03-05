@@ -41,15 +41,21 @@ def recognize_from_microphone():
             print("Did you set the speech resource key and endpoint values?")
     return ""
 
-def convert_text_to_speech(text):
+def convert_text_to_speech(text, language="en-US"):
     audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
-    speech_config.speech_synthesis_voice_name='en-US-Ava:DragonHDLatestNeural'
+    voices = {
+        "en-US": "en-US-AvaNeural",
+        "hi-IN": "hi-IN-SwaraNeural",
+        "bn-IN": "bn-IN-TanishaaNeural",
+        "gu-IN": "gu-IN-DhwaniNeural"
+    }
+    speech_config.speech_synthesis_voice_name = voices.get(language, "en-US-AvaNeural")
 
     speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
     speech_synthesis_result = speech_synthesizer.speak_text_async(text).get()
 
     if speech_synthesis_result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-        print("Speech synthesized for text [{}]".format(text))
+        print(f"Speech synthesized for text [{text}] in language [{language}]")
     elif speech_synthesis_result.reason == speechsdk.ResultReason.Canceled:
         cancellation_details = speech_synthesis_result.cancellation_details
         print("Speech synthesis canceled: {}".format(cancellation_details.reason))

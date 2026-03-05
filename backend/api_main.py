@@ -32,14 +32,6 @@ app.add_middleware(
 def health_check():
     return {"status": "ok"}
 
-@app.post("/analyze-document/")
-async def analyze_document(file: UploadFile = File(...)):
-    file_location = f"Docs/{file.filename}"
-    with open(file_location, "wb") as f:
-        f.write(await file.read())
-    text = get_document_text(file_location)
-    return {"filename": file.filename, "text": text}
-
 class ChatRequest(BaseModel):
     query: str
 

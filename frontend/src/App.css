@@ -1,3 +1,22 @@
+/* Circular icon background for bot actions */
+.crackit-bot-action-circle {
+  background: none;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+  margin: 0 2px;
+  transition: background 0.2s;
+  cursor: pointer;
+  padding: 0;
+}
+.crackit-bot-action-circle:hover {
+  background: #b7d3e2;
+}
 /* ========== CrackIT Redesign ========== */
 
 /* === Main Layout === */

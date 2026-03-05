@@ -8,12 +8,20 @@ import Timer from './Timer';
 import TodoList from "./TodoList";
 
 function ChatBox({ messages, onSend }) {
+  const [ttsLanguage, setTtsLanguage] = useState("en-US");
+  const ttsLanguages = [
+    { code: "en-US", label: "English" },
+    { code: "hi-IN", label: "Hindi" },
+    { code: "bn-IN", label: "Bengali" },
+    { code: "gu-IN", label: "Gujarati" }
+  ];
+
   const handleTextToSpeech = async (text) => {
     try {
       await fetch('http://localhost:8000/text-to-speech/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
+        body: JSON.stringify({ text, language: ttsLanguage })
       });
     } catch (err) {
       alert("Text-to-speech failed.");
@@ -67,16 +75,38 @@ function ChatBox({ messages, onSend }) {
               />
             </div>
             {msg.role === 'bot' && (
-              <div className="crackit-bot-actions">
+              <div className="crackit-bot-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button
+                    className="crackit-bot-action-btn crackit-bot-action-circle"
+                    title="Text to Speech"
+                    onClick={() => handleTextToSpeech(msg.text)}
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="12" fill="#d3e6ef" />
+                      <path d="M8 9V15H11L15 19V5L11 9H8Z" fill="#222" />
+                    </svg>
+                  </button>
+                  <select
+                    value={ttsLanguage}
+                    onChange={e => setTtsLanguage(e.target.value)}
+                    className="crackit-tts-language-dropdown"
+                    style={{ fontSize: '0.9em', padding: '2px 6px', borderRadius: '8px', border: '1px solid #b7d3e2', marginLeft: '2px', background: '#f4fafd' }}
+                    title="Select TTS Language"
+                  >
+                    {ttsLanguages.map(lang => (
+                      <option key={lang.code} value={lang.code}>{lang.label}</option>
+                    ))}
+                  </select>
+                </div>
                 <button
-                  className="crackit-bot-action-btn"
-                  title="Text to Speech"
-                  onClick={() => handleTextToSpeech(msg.text)}
+                  className="crackit-bot-action-btn crackit-bot-action-circle"
+                  title="Bookmark"
                 >
-                  🔊
-                </button>
-                <button className="crackit-bot-action-btn" title="Bookmark">
-                  🔖
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="12" fill="#d3e6ef" />
+                    <path d="M7 5H17V19L12 16L7 19V5Z" fill="#222" />
+                  </svg>
                 </button>
               </div>
             )}

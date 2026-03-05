@@ -94,12 +94,31 @@ function ChatBox({ messages, onSend }) {
           onKeyDown={e => { if (e.key === 'Enter') handleSend(); }}
         />
         <button
+          className={`crackit-chat-speech-btn ${listening ? 'active' : ''}`}
+          title="Voice input"
+          onClick={handleSpeechToText}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 1C10.3431 1 9 2.34315 9 4V12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12V4C15 2.34315 13.6569 1 12 1Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M19 10V12C19 16.4183 15.4183 20 11 20C6.58172 20 3 16.4183 3 12V10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 20V23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M8 23H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+        <button
           className="crackit-chat-attach-btn"
           title="Attach file"
         >
-          📎
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21.44 11.05L12.25 20.24C11.1242 21.3658 9.59718 21.9983 8.005 21.9983C6.41282 21.9983 4.88584 21.3658 3.76 20.24C2.63416 19.1142 2.00166 17.5872 2.00166 15.995C2.00166 14.4028 2.63416 12.8758 3.76 11.75L12.33 3.18C13.0806 2.42945 14.0991 2.00758 15.165 2.00758C16.2309 2.00758 17.2494 2.42945 18 3.18C18.7506 3.93055 19.1724 4.94905 19.1724 6.015C19.1724 7.08095 18.7506 8.09945 18 9.85L9.41 18.44C8.935 18.915 8.2905 19.1817 7.615 19.1817C6.9395 19.1817 6.295 18.915 5.82 18.44C5.34499 17.965 5.07833 17.3205 5.07833 16.645C5.07833 15.9695 5.34499 15.325 5.82 14.85L13.07 7.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </button>
-        <button className="crackit-chat-send-btn" onClick={handleSend}>→</button>
+        <button className="crackit-chat-send-btn" onClick={handleSend}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
       </div>
       {listening && (
         <div className="crackit-listening-msg">Microphone is open, speak now...</div>
@@ -111,6 +130,8 @@ function ChatBox({ messages, onSend }) {
 function App() {
   const [messages, setMessages] = useState([]);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [toolsCollapsed, setToolsCollapsed] = useState(false);
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -166,10 +187,62 @@ function App() {
 
       <div className="crackit-main">
         {/* Left Sidebar */}
-        <div className="crackit-sidebar">
+        <div className={`crackit-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
           <div className="crackit-sidebar-header">
-            <span>Your Learning Material</span>
-            <button className="crackit-panel-collapse-btn">Add Icon</button>
+            <span className="crackit-sidebar-icon">📚</span>
+            <span className="crackit-sidebar-title">Your Learning Material</span>
+            <button 
+              className="crackit-panel-collapse-btn"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            >
+                      <svg
+                width="40"
+                height="32"
+                viewBox="0 0 40 32"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <g clipPath="url(#clip0)">
+                  <rect
+                    x="40"
+                    width="32"
+                    height="40"
+                    rx="16"
+                    transform="rotate(90 40 0)"
+                    fill="#AFCFDD"
+                  />
+                  <g clipPath="url(#clip1)">
+                    <path
+                      d="M17.1667 16L22.1667 11L23.3334 12.1667L19.5 16L23.3334 19.8333L22.1667 21L17.1667 16Z"
+                      fill="#49454F"
+                    />
+                  </g>
+                </g>
+
+                <defs>
+                  <clipPath id="clip0">
+                    <rect
+                      x="40"
+                      width="32"
+                      height="40"
+                      rx="16"
+                      transform="rotate(90 40 0)"
+                      fill="white"
+                    />
+                  </clipPath>
+                  <clipPath id="clip1">
+                    <rect
+                      x="36"
+                      width="32"
+                      height="32"
+                      rx="16"
+                      transform="rotate(90 36 0)"
+                      fill="white"
+                    />
+                  </clipPath>
+                </defs>
+              </svg>
+            </button>
           </div>
           <div className="crackit-sidebar-upload">
             <input
@@ -202,16 +275,73 @@ function App() {
         <div className="crackit-content">
           <div className="crackit-content-header">
             <span className="crackit-content-header-dropdown">
-              Explanation Mode <span className="arrow">▾</span>
+              Explanation Mode <span className="arrow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18 10L12 16L6 10L7.4 8.6L12 13.2L16.6 8.6L18 10Z" fill="#1D1B20"/>
+                </svg>
+              </span>
             </span>
           </div>
           <ChatBox messages={messages} onSend={handleChat} />
         </div>
 
         {/* Right Tools Panel */}
-        <div className="crackit-tools">
+        <div className={`crackit-tools ${toolsCollapsed ? 'collapsed' : ''}`}>
           <div className="crackit-tools-header">
-            <span>Tools</span>
+            <span className="crackit-tools-icon">🛠️</span>
+            <span className="crackit-tools-title">Tools</span>
+            <button 
+              className="crackit-panel-collapse-btn"
+              onClick={() => setToolsCollapsed(!toolsCollapsed)}
+            >
+                      <svg
+                width="40"
+                height="32"
+                viewBox="0 0 40 32"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <g clipPath="url(#clip0)">
+                  <rect
+                    x="40"
+                    width="32"
+                    height="40"
+                    rx="16"
+                    transform="rotate(90 40 0)"
+                    fill="#AFCFDD"
+                  />
+                  <g clipPath="url(#clip1)">
+                    <path
+                      d="M17.1667 16L22.1667 11L23.3334 12.1667L19.5 16L23.3334 19.8333L22.1667 21L17.1667 16Z"
+                      fill="#49454F"
+                    />
+                  </g>
+                </g>
+
+                <defs>
+                  <clipPath id="clip0">
+                    <rect
+                      x="40"
+                      width="32"
+                      height="40"
+                      rx="16"
+                      transform="rotate(90 40 0)"
+                      fill="white"
+                    />
+                  </clipPath>
+                  <clipPath id="clip1">
+                    <rect
+                      x="36"
+                      width="32"
+                      height="32"
+                      rx="16"
+                      transform="rotate(90 36 0)"
+                      fill="white"
+                    />
+                  </clipPath>
+                </defs>
+              </svg>
+            </button>
           </div>
           <div className="crackit-tools-body">
             <div style={{ height: 10 }} />

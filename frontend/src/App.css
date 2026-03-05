@@ -70,14 +70,14 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: #e0d8c0;
+  background: #a5c8e1;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.1em;
   color: #555;
   cursor: pointer;
-  border: 1.5px solid #000000;
+  /* border: 1.5px solid #000000; */
   margin-left: 1em;
 }
 
@@ -101,6 +101,36 @@
   flex-direction: column;
   overflow: hidden;
   border: none;
+  transition: width 0.3s ease;
+}
+
+/* === Collapsed Sidebar === */
+.crackit-sidebar.collapsed {
+  width: 50px;
+  min-width: 50px;
+}
+
+.crackit-sidebar.collapsed .crackit-sidebar-upload,
+.crackit-sidebar.collapsed .crackit-sidebar-files {
+  display: none;
+}
+
+.crackit-sidebar.collapsed .crackit-sidebar-header span {
+  display: none;
+}
+
+/* === Collapsed Tools === */
+.crackit-tools.collapsed {
+  width: 50px;
+  min-width: 50px;
+}
+
+.crackit-tools.collapsed .crackit-tools-body {
+  display: none;
+}
+
+.crackit-tools.collapsed .crackit-tools-header span {
+  display: none;
 }
 
 /* === Center content panel === */
@@ -111,7 +141,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid #e8e0c8;
+  /* border: 1px solid #e8e0c8; */
 }
 
 /* === Panel headers === */
@@ -120,19 +150,70 @@
   background: #AFCFDD;
   font-weight: 'Regular'  ;
   padding: 0.55em 1em;
-  font-size: 0.92em;
+  font-size: 0.85em;
   text-align: center;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #8cc8a0;
+  /* border-bottom: 1px solid #8cc8a0; */
+  gap: 0.5em;
+  white-space: nowrap;
 }
 
 .crackit-sidebar-header span,
 .crackit-tools-header span {
   flex: 1;
   text-align: center;
+  margin: 0 0.5em;
+}
+
+.crackit-sidebar-icon {
+  flex: 0 0 auto;
+  font-size: 1.2em;
+}
+
+.crackit-sidebar-title {
+  flex: 1;
+}
+
+.crackit-tools-icon {
+  flex: 0 0 auto;
+  font-size: 1.2em;
+}
+
+.crackit-tools-title {
+  flex: 1;
+}
+
+.crackit-sidebar.collapsed .crackit-sidebar-header {
+  justify-content: space-between;
+  padding: 0.55em 0.4em;
+  position: relative;
+}
+
+.crackit-sidebar.collapsed .crackit-sidebar-icon {
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.crackit-sidebar.collapsed .crackit-sidebar-title {
+  display: none;
+}
+
+.crackit-tools.collapsed .crackit-tools-header {
+  justify-content: space-between;
+  padding: 0.55em 0.4em;
+  position: relative;
+}
+
+.crackit-tools.collapsed .crackit-tools-icon {
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.crackit-tools.collapsed .crackit-tools-title {
+  display: none;
 }
 
 .crackit-panel-collapse-btn {
@@ -143,6 +224,21 @@
   cursor: pointer;
   padding: 0 4px;
   font-weight: 700;
+  transition: transform 0.3s ease;
+  flex: 0 0 auto;
+}
+
+.crackit-tools-header .crackit-panel-collapse-btn {
+  order: -1;
+  transform: rotate(180deg);
+}
+
+.crackit-sidebar.collapsed .crackit-panel-collapse-btn {
+  transform: rotate(180deg);
+}
+
+.crackit-tools.collapsed .crackit-panel-collapse-btn {
+  transform: rotate(0deg);
 }
 
 .crackit-content-header {

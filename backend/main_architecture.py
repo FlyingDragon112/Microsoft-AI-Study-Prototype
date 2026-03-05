@@ -2,8 +2,10 @@ from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.core.credentials import AzureKeyCredential
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
+from openai import OpenAI
 import logging 
 import os
+import requests
 
 logging.basicConfig(level=logging.INFO)
 load_dotenv()
@@ -53,13 +55,23 @@ SYSTEM_PROMPT = (
     "Clearly mark end of lines with '\n'"   
 )
 
-llm = None
-try:
-    llm = ChatOpenAI(
-        base_url="https://models.github.ai/inference",
-        model="openai/gpt-4.1",
-        api_key=os.getenv("CHAT_API"),
-    )
-    logging.info("Model Working")
-except Exception as e:
-    logging.info(f"Model expired: Switch Model or Key. Error: {e}")
+endpoint = "https://firsttimerschat1.openai.azure.com/openai/v1"
+deployment_name = "gpt-4.1-nano"
+api_key = "BKODepscxWslIBsfK9Ty9sBR6Vvrhj4CziEHmeEG1OkzkUoaIZ41JQQJ99CCACqBBLyXJ3w3AAABACOG34DF"
+
+client = OpenAI(
+    base_url=endpoint,
+    api_key=api_key
+)
+
+completion = client.chat.completions.create(
+    model="gpt-4.1-nano",
+    messages=[
+        {
+        "role": "user",
+        "content": "Hi",
+        }
+    ],
+)
+
+print(completion.choices[0].message)

@@ -8,6 +8,28 @@ function pad(n) {
   return String(n).padStart(2, '0');
 }
 
+function playAlarmSound() {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // Frequency in Hz
+    oscillator.type = 'sine'; // Waveform type
+
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime); // Volume
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5); // Fade out
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.5); // Duration
+  } catch (error) {
+    console.warn('Audio playback failed:', error);
+  }
+}
+
 function Timer() {
   const [hours, setHours] = useState(DEFAULT_HOURS);
   const [minutes, setMinutes] = useState(DEFAULT_MINUTES);
@@ -34,6 +56,8 @@ function Timer() {
           if (prev > 0) return prev - 1;
           clearInterval(intervalRef.current);
           setIsRunning(false);
+          // Play alarm sound when timer finishes
+          playAlarmSound();
           return 0;
         });
       }, 1000);

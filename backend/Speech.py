@@ -41,7 +41,8 @@ def recognize_from_microphone():
             print("Did you set the speech resource key and endpoint values?")
     return ""
 
-def convert_text_to_speech(text, language="en-US"):
+def convert_text_to_speech(text, language):
+    print(f"Converting text to speech in language: {language}")  # Debugging log
     audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
     voices = {
         "en-US": "en-US-AvaNeural",
@@ -49,7 +50,7 @@ def convert_text_to_speech(text, language="en-US"):
         "bn-IN": "bn-IN-TanishaaNeural",
         "gu-IN": "gu-IN-DhwaniNeural"
     }
-    speech_config.speech_synthesis_voice_name = voices.get(language, "en-US-AvaNeural")
+    speech_config.speech_synthesis_voice_name = voices.get(language, "hi-IN-SwaraNeural")
 
     speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
     speech_synthesis_result = speech_synthesizer.speak_text_async(text).get()

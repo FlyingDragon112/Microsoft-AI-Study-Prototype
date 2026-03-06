@@ -122,7 +122,8 @@ async def speech_to_text():
 async def text_to_speech(request: Request):
     data = await request.json()
     text = data.get("text", "")
-    convert_text_to_speech(text)
+    language = data.get("language", "en-US")
+    convert_text_to_speech(text, language)
     return {"status": "ok"}
 
 @app.post("/upload/")

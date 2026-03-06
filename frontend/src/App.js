@@ -17,13 +17,25 @@ function ChatBox({ messages, onSend }) {
   ];
 
   const handleTextToSpeech = async (text) => {
+    console.log(`Selected language for TTS: ${ttsLanguage}`); // Debugging log
+
+    if (!text.trim()) {
+      alert("Please enter text for text-to-speech.");
+      return;
+    }
+
     try {
-      await fetch('http://localhost:8000/text-to-speech/', {
+      const response = await fetch('http://localhost:8000/text-to-speech/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, language: ttsLanguage })
       });
+
+      if (!response.ok) {
+        alert("Text-to-speech failed.");
+      }
     } catch (err) {
+      console.error("Error during text-to-speech:", err);
       alert("Text-to-speech failed.");
     }
   };

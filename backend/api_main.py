@@ -9,6 +9,8 @@ from openai import OpenAI
 from fastapi import HTTPException
 import shutil
 from typing import List
+import base64
+from mimetypes import guess_type
 
 endpoint = "https://firsttimerschat1.openai.azure.com/openai/v1"
 deployment_name = "gpt-4.1-nano"
@@ -69,19 +71,35 @@ SYSTEM_PROMPT = (
 async def chat(request: ChatRequest):
     context_window.add_message(f"User: {request.query}")
     context = context_window.get_context()
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT}
+
+    # Fetch ticked files
+    ticked_files_response = await get_ticked_files()
+    ticked_files = ticked_files_response["ticked_files"]
+
+    # Filter for image files
+    image_files = [file for file in ticked_files if file.lower().endswith((".jpg", ".jpeg", ".png", ".gif"))]
+
+    # Construct the content with user query and images
+    content = [
+        {"type": "text", "text": request.query}
     ]
-    for msg in context_window.messages:
-        if msg.startswith("User: "):
-            messages.append({"role": "user", "content": msg[len("User: "):]})
-        elif msg.startswith("Bot: "):
-            messages.append({"role": "assistant", "content": msg[len("Bot: "):]})
+
+    for image in image_files:
+        image_path = f"uploads/{image}"
+        data_url = local_image_to_data_url(image_path)
+        content.append({"type": "image_url", "image_url": {"url": data_url}})
+
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": content}
+    ]
+
     response_obj = client.chat.completions.create(
-        model = "gpt-4.1-nano",
-        messages=messages
+        model="gpt-4.1-nano",
+        messages=messages,
+        max_tokens=2000
     )
-    # Extract the response text (adjust if API response structure differs)
+
     response_text = response_obj.choices[0].message.content if hasattr(response_obj, 'choices') else str(response_obj)
     context_window.add_message(f"Bot: {response_text}")
     return {"query": request.query, "response": response_text, "context": context}
@@ -136,3 +154,17 @@ async def update_ticked_files(ticked_files: TickedFiles):
 async def get_ticked_files():
     print(ticked_files_store)
     return {"ticked_files": ticked_files_store}
+
+# Function to encode a local image into data URL
+def local_image_to_data_url(image_path):
+    # Guess the MIME type of the image based on the file extension
+    mime_type, _ = guess_type(image_path)
+    if mime_type is None:
+        mime_type = 'application/octet-stream'  # Default MIME type if none is found
+
+    # Read and encode the image file
+    with open(image_path, "rb") as image_file:
+        base64_encoded_data = base64.b64encode(image_file.read()).decode('utf-8')
+
+    # Construct the data URL
+    return f"data:{mime_type};base64,{base64_encoded_data}"

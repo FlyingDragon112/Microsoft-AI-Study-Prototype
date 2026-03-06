@@ -66,43 +66,98 @@ SYSTEM_PROMPT = (
     "Use clear step-by-step formatting with numbered steps."
     "Clearly mark end of lines with '\n'"   
 )
-
 @app.post("/chat/")
 async def chat(request: ChatRequest):
-    context_window.add_message(f"User: {request.query}")
-    context = context_window.get_context()
+    try:
+        context_window.add_message(f"User: {request.query}")
+        context = context_window.get_context()
 
-    # Fetch ticked files
-    ticked_files_response = await get_ticked_files()
-    ticked_files = ticked_files_response["ticked_files"]
+        # Fetch ticked files
+        ticked_files_response = await get_ticked_files()
+        ticked_files = ticked_files_response["ticked_files"]
 
-    # Filter for image files
-    image_files = [file for file in ticked_files if file.lower().endswith((".jpg", ".jpeg", ".png", ".gif"))]
+        # Filter for image files
+        image_files = [file for file in ticked_files if file.lower().endswith((".jpg", ".jpeg", ".png", ".gif"))]
 
-    # Construct the content with user query and images
-    content = [
-        {"type": "text", "text": request.query}
-    ]
+        # Construct the content with user query and images
+        content = [
+            {"type": "text", "text": request.query}
+        ]
 
-    for image in image_files:
-        image_path = f"uploads/{image}"
-        data_url = local_image_to_data_url(image_path)
-        content.append({"type": "image_url", "image_url": {"url": data_url}})
+        for image in image_files:
+            image_path = f"uploads/{image}"
+            data_url = local_image_to_data_url(image_path)
+            content.append({"type": "image_url", "image_url": {"url": data_url}})
+        print(content)
 
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": content}
-    ]
+        # Call get_single_question if ticked_files is not empty
+        single_question_response = None
+        if ticked_files:
+            single_question_response = await get_single_question(content)
+        print("worked till here")
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": content}
+        ]
 
-    response_obj = client.chat.completions.create(
-        model="gpt-4.1-nano",
-        messages=messages,
-        max_tokens=2000
-    )
+        response_obj = client.chat.completions.create(
+            model="gpt-4.1-nano",
+            messages=messages,
+            max_tokens=2000
+        )
 
-    response_text = response_obj.choices[0].message.content if hasattr(response_obj, 'choices') else str(response_obj)
-    context_window.add_message(f"Bot: {response_text}")
-    return {"query": request.query, "response": response_text, "context": context}
+        response_text = response_obj.choices[0].message.content if hasattr(response_obj, 'choices') else str(response_obj)
+        context_window.add_message(f"Bot: {response_text}")
+
+        # Combine the LLM response with the single question response if available
+        if single_question_response:
+            response_text += f"\n\nAdditional Question:\n{single_question_response['response']}"
+
+        print({"query": request.query, "response": response_text, "context": context})
+        return {"query": request.query, "response": response_text, "context": context}
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error in /chat/ endpoint: {e}")
+
+        # Return a 500 Internal Server Error response
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+# @app.post("/chat/")
+# async def chat(request: ChatRequest):
+#     context_window.add_message(f"User: {request.query}")
+#     context = context_window.get_context()
+
+#     # Fetch ticked files
+#     ticked_files_response = await get_ticked_files()
+#     ticked_files = ticked_files_response["ticked_files"]
+
+#     # Filter for image files
+#     image_files = [file for file in ticked_files if file.lower().endswith((".jpg", ".jpeg", ".png", ".gif"))]
+
+#     # Construct the content with user query and images
+#     content = [
+#         {"type": "text", "text": request.query}
+#     ]
+
+#     for image in image_files:
+#         image_path = f"uploads/{image}"
+#         data_url = local_image_to_data_url(image_path)
+#         content.append({"type": "image_url", "image_url": {"url": data_url}})
+
+#     messages = [
+#         {"role": "system", "content": SYSTEM_PROMPT},
+#         {"role": "user", "content": content}
+#     ]
+
+#     response_obj = client.chat.completions.create(
+#         model="gpt-4.1-nano",
+#         messages=messages,
+#         max_tokens=2000
+#     )
+
+#     response_text = response_obj.choices[0].message.content if hasattr(response_obj, 'choices') else str(response_obj)
+#     context_window.add_message(f"Bot: {response_text}")
+#     return {"query": request.query, "response": response_text, "context": context}
 
 # @app.post("/chat/")
 # async def chat(request: ChatRequest):
@@ -158,14 +213,73 @@ async def get_ticked_files():
 
 # Function to encode a local image into data URL
 def local_image_to_data_url(image_path):
-    # Guess the MIME type of the image based on the file extension
     mime_type, _ = guess_type(image_path)
     if mime_type is None:
-        mime_type = 'application/octet-stream'  # Default MIME type if none is found
+        mime_type = 'application/octet-stream' 
 
-    # Read and encode the image file
     with open(image_path, "rb") as image_file:
         base64_encoded_data = base64.b64encode(image_file.read()).decode('utf-8')
 
-    # Construct the data URL
     return f"data:{mime_type};base64,{base64_encoded_data}"
+
+
+from sentence_transformers import SentenceTransformer
+import faiss
+import json 
+model = SentenceTransformer('multi-qa-mpnet-base-dot-v1')  # Same model used for embeddings
+index = faiss.read_index(r"C:\Users\Arnav Agarwal\Desktop\Microsoft Hack\faiss_index.bin")
+with open(r"C:\Users\Arnav Agarwal\Desktop\Microsoft Hack\metadata.json", "r") as f:
+    metadata = json.load(f)
+
+@app.post("/get-single-question/")
+async def get_single_question(content: List[dict]):
+    """
+    Endpoint to get a single question based on the user's query and images.
+    """
+    # Construct the context from content (text and images)
+    context_parts = []
+    for item in content:
+        if item["type"] == "text":
+            context_parts.append(f"User Query: {item['text']}")
+        elif item["type"] == "image_url":
+            context_parts.append(f"Image Context: {item['image_url']['url']}")
+
+    # Combine all parts into a single context string
+    combined_context = "\n".join(context_parts)
+
+    try:
+        # Generate embeddings for the combined context
+        query_embedding = model.encode([combined_context])
+        distances, indices = index.search(query_embedding,3)
+        results = [metadata[i] for i in indices[0]]
+
+        # Format the retrieved questions
+        context = "\n".join([f"Q: {result['question']}" for result in results])
+        SYSTEM_PROMPT = """You are a helpful assistant that provides similar questions based on the user's query and images.
+        Give ONLY ONE Question in the following format:
+        Examination and Year of Question - 
+        Topics - 
+        Question - 
+        Options - 
+        a)
+        b)
+        c)
+        d)
+        ENSURE NO FIELD IS LEFT EMPTY
+        """
+        content_message = f"Here are some questions similar to the user's query and images:\n{context}\n\nPlease provide a list of these questions in a user-friendly format."
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": content_message}
+        ]
+
+        response_obj = client.chat.completions.create(
+            model=deployment_name,
+            messages=messages,
+            max_tokens=2000
+        )
+
+        response_text = response_obj.choices[0].message.content
+        return {"context": combined_context, "response": response_text}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")

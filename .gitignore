@@ -1,6 +1,6 @@
 /.env
 Docs
-/backend/books
+/backend/data
 node_modules
 /papers
 /backend/__pycache__

@@ -57,7 +57,7 @@ class ContextWindow:
 context_window = ContextWindow(size=50)
 
 SYSTEM_PROMPT = (
-    "You are a helpful math tutor. When explaining solutions, "
+    "You are a helpful tutor specialising in Math, Physics and Chemistry. When explaining solutions, "
     "format your response in plain text. Do NOT use LaTeX, dollar signs ($), "
     "\\boxed{}, or any math markup. Use simple notation like: "
     "x^2 for exponents, sqrt() for square roots, and write fractions as a/b. "

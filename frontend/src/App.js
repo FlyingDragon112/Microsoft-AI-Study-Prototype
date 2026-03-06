@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './App.css';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -216,7 +216,7 @@ function App() {
     setMessages(prev => [...prev, { role: 'bot', text: responseText }]);
   };
 
-  const updateTickedFiles = async () => {
+  const updateTickedFiles = useCallback(async () => {
     const tickedFiles = uploadedFiles.filter(file => file.checked).map(file => file.name);
 
     try {
@@ -232,11 +232,11 @@ function App() {
     } catch (error) {
       console.error("Error updating ticked files:", error);
     }
-  };
+  }, [uploadedFiles]);
 
   useEffect(() => {
     updateTickedFiles();
-  }, [uploadedFiles]);
+  }, [updateTickedFiles]);
 
   return (
     <div className="crackit-app">

@@ -6,6 +6,9 @@ from pydantic import BaseModel
 from Speech import recognize_from_microphone, convert_text_to_speech
 from fastapi import Request
 from openai import OpenAI
+from fastapi import HTTPException
+import shutil
+from typing import List
 
 endpoint = "https://firsttimerschat1.openai.azure.com/openai/v1"
 deployment_name = "gpt-4.1-nano"
@@ -26,6 +29,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+if os.path.exists("uploads"):
+    shutil.rmtree("uploads")
+os.makedirs("uploads", exist_ok=True)
 
 @app.get("/health")
 def health_check():
@@ -99,3 +106,33 @@ async def text_to_speech(request: Request):
     text = data.get("text", "")
     convert_text_to_speech(text)
     return {"status": "ok"}
+
+@app.post("/upload/")
+async def upload_file(file: UploadFile = File(...)):
+    try:
+        upload_dir = "uploads"
+        os.makedirs(upload_dir, exist_ok=True)
+        file_path = os.path.join(upload_dir, file.filename)
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
+        return {"filename": file.filename, "status": "uploaded"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
+
+class TickedFiles(BaseModel):
+    ticked_files: List[str]
+
+# Store ticked files in memory for simplicity
+ticked_files_store = []
+
+@app.post("/ticked-files/")
+async def update_ticked_files(ticked_files: TickedFiles):
+    global ticked_files_store
+    ticked_files_store = ticked_files.ticked_files
+    print(ticked_files_store)
+    return {"status": "updated", "ticked_files": ticked_files_store}
+
+@app.get("/ticked-files/")
+async def get_ticked_files():
+    print(ticked_files_store)
+    return {"ticked_files": ticked_files_store}

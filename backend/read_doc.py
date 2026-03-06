@@ -1,4 +1,4 @@
-from azure.ai.formrecognizer import DocumentAnalysisClient
+from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.core.credentials import AzureKeyCredential
 import os
 from dotenv import load_dotenv
@@ -9,7 +9,7 @@ key = os.getenv("DOC_KEY")  # Replace with your Azure key
 
 def analyze_document(file_path):
     # Initialize the client
-    document_analysis_client = DocumentAnalysisClient(endpoint=endpoint, credential=AzureKeyCredential(key))
+    document_analysis_client = DocumentIntelligenceClient(endpoint=endpoint, credential=AzureKeyCredential(key))
 
     # Read the document
     with open(file_path, "rb") as document:

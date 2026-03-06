@@ -163,10 +163,27 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [toolsCollapsed, setToolsCollapsed] = useState(false);
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      setUploadedFiles(prev => [...prev, { name: file.name, checked: true }]);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await fetch("http://localhost:8000/upload/", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUploadedFiles((prev) => [...prev, { name: data.filename, checked: false }]);
+        } else {
+          console.error("File upload failed.");
+        }
+      } catch (error) {
+        console.error("Error uploading file:", error);
+      }
     }
   };
 
@@ -198,6 +215,28 @@ function App() {
 
     setMessages(prev => [...prev, { role: 'bot', text: responseText }]);
   };
+
+  const updateTickedFiles = async () => {
+    const tickedFiles = uploadedFiles.filter(file => file.checked).map(file => file.name);
+
+    try {
+      const response = await fetch("http://localhost:8000/ticked-files/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticked_files: tickedFiles }),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to update ticked files.");
+      }
+    } catch (error) {
+      console.error("Error updating ticked files:", error);
+    }
+  };
+
+  useEffect(() => {
+    updateTickedFiles();
+  }, [uploadedFiles]);
 
   return (
     <div className="crackit-app">

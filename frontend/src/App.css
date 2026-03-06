@@ -23,7 +23,7 @@
 .crackit-app {
   background: #CFE3EA;
   height: 100vh;
-  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  font-family: 'Poppins';
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -194,6 +194,7 @@
 
 .crackit-sidebar-title {
   flex: 1;
+  transform: translateX(+20px);
 }
 
 .crackit-tools-icon {
@@ -203,6 +204,7 @@
 
 .crackit-tools-title {
   flex: 1;
+  transform: translateX(-20px);
 }
 
 .crackit-sidebar.collapsed .crackit-sidebar-header {
@@ -263,7 +265,7 @@
 .crackit-content-header {
   background: #AFCFDD;
   color: #000000;
-  font-weight: 600;
+  font-weight: 1;
   padding: 0.55em 1.2em;
   font-size: 0.95em;
   text-align: center;
@@ -276,14 +278,14 @@
 }
 
 .crackit-content-header-dropdown {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3em;
+  background: none;
+  border: none;
+  font-size: inherit;
+  color: inherit;
   cursor: pointer;
-}
-
-.crackit-content-header-dropdown .arrow {
-  font-size: 0.7em;
+  font-weight: inherit;
+  font-family: inherit;
+  outline: none;
 }
 
 /* === Sidebar upload/file area === */
@@ -303,7 +305,7 @@
   cursor: pointer;
   font-weight: 'Regular';
   font-size: 13px;
-  border: 1.5px solid #000000;
+  border: 0.5px solid #000000;
   text-align: center;
   transition: background 0.2s, color 0.2s;
 }
@@ -327,10 +329,10 @@
   align-items: center;
   gap: 8px;
   font-size: 0.82em;
-  color: #AFCFDD;
+  color: #497385;
   padding: 4px 6px;
   border-radius: 6px;
-  background: #d5f1df;
+  background: #e4e4e4;
 }
 
 .crackit-sidebar-file-icon {
@@ -428,7 +430,7 @@
 }
 
 .crackit-bot-action-btn:hover {
-  background: #f0e8d0;
+  background: #8abec7;
 }
 
 /* Language selector */
@@ -515,7 +517,7 @@
 }
 
 .crackit-chat-attach-btn:hover {
-  background: #f0e8d0;
+  background: #d0e6f0;
 }
 
 .crackit-chat-send-btn {
@@ -536,7 +538,7 @@
 }
 
 .crackit-chat-send-btn:hover {
-  background: #d8d0b8;
+  background: #d0e6f0;
   color: #333;
 }
 
@@ -552,7 +554,7 @@
 }
 
 .crackit-chat-speech-btn:hover {
-  background: #f0e8d0;
+  background: #d0e6f0;
 }
 
 .crackit-listening-msg {

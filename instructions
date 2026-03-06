@@ -1,2 +1,12 @@
-.\.env\Scripts\Activate
+source venv/bin/activate
+cd frontend 
+npm start 
 
+cd backend
+uvicorn api_main:app --reload
+
+git pull origin main 
+
+git add .
+git commit -m ""
+git push origin main 

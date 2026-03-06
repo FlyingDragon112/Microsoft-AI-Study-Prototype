@@ -66,6 +66,15 @@ SYSTEM_PROMPT = (
     "Use clear step-by-step formatting with numbered steps."
     "Clearly mark end of lines with '\n'"   
 )
+SYSTEM_PROMPT2 = (
+    "You are a helpful tutor specialising in Math, Physics and Chemistry. When explaining solutions, "
+    "format your response in plain text. Do NOT use LaTeX, dollar signs ($), "
+    "\\boxed{}, or any math markup. Use simple notation like: "
+    "x² for exponents, fractions should look like fractions and not a/b. "
+    "Use clear step-by-step formatting with numbered steps."
+    "Clearly mark end of lines with '\n'"   
+)
+
 @app.post("/chat/")
 async def chat(request: ChatRequest):
     try:
@@ -96,7 +105,7 @@ async def chat(request: ChatRequest):
             single_question_response = await get_single_question(content)
         print("worked till here")
         messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": SYSTEM_PROMPT2},
             {"role": "user", "content": content}
         ]
 
@@ -121,52 +130,6 @@ async def chat(request: ChatRequest):
 
         # Return a 500 Internal Server Error response
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-
-# @app.post("/chat/")
-# async def chat(request: ChatRequest):
-#     context_window.add_message(f"User: {request.query}")
-#     context = context_window.get_context()
-
-#     # Fetch ticked files
-#     ticked_files_response = await get_ticked_files()
-#     ticked_files = ticked_files_response["ticked_files"]
-
-#     # Filter for image files
-#     image_files = [file for file in ticked_files if file.lower().endswith((".jpg", ".jpeg", ".png", ".gif"))]
-
-#     # Construct the content with user query and images
-#     content = [
-#         {"type": "text", "text": request.query}
-#     ]
-
-#     for image in image_files:
-#         image_path = f"uploads/{image}"
-#         data_url = local_image_to_data_url(image_path)
-#         content.append({"type": "image_url", "image_url": {"url": data_url}})
-
-#     messages = [
-#         {"role": "system", "content": SYSTEM_PROMPT},
-#         {"role": "user", "content": content}
-#     ]
-
-#     response_obj = client.chat.completions.create(
-#         model="gpt-4.1-nano",
-#         messages=messages,
-#         max_tokens=2000
-#     )
-
-#     response_text = response_obj.choices[0].message.content if hasattr(response_obj, 'choices') else str(response_obj)
-#     context_window.add_message(f"Bot: {response_text}")
-#     return {"query": request.query, "response": response_text, "context": context}
-
-# @app.post("/chat/")
-# async def chat(request: ChatRequest):
-#     context_window.add_message(f"User: {request.query}")
-#     # Pass context to LLM if needed
-#     context = context_window.get_context()
-#     response = llm.invoke(context)
-#     context_window.add_message(f"Bot: {response}")
-#     return {"query": request.query, "response": response, "context": context}
 
 @app.post("/speech-to-text/")
 async def speech_to_text():
@@ -231,11 +194,82 @@ index = faiss.read_index(r"C:\Users\Arnav Agarwal\Desktop\Microsoft Hack\faiss_i
 with open(r"C:\Users\Arnav Agarwal\Desktop\Microsoft Hack\metadata.json", "r") as f:
     metadata = json.load(f)
 
+# @app.post("/get-single-question/")
+# async def get_single_question(content: List[dict]):
+#     """
+#     Endpoint to get a single question based on the user's query and images.
+#     """
+#     # Construct the context from content (text and images)
+#     context_parts = []
+#     for item in content:
+#         if item["type"] == "text":
+#             context_parts.append(f"User Query: {item['text']}")
+#         elif item["type"] == "image_url":
+#             context_parts.append(f"Image Context: {item['image_url']['url']}")
+
+#     # Combine all parts into a single context string
+#     combined_context = "\n".join(context_parts)
+
+#     try:
+#         # Generate embeddings for the combined context
+#         query_embedding = model.encode([combined_context])
+#         distances, indices = index.search(query_embedding,3)
+#         results = [metadata[i] for i in indices[0]]
+
+#         # Format the retrieved questions
+#         context = "\n".join([f"Q: {result['question']}" for result in results])
+#         SYSTEM_PROMPT = """You are a helpful assistant that provides similar questions based on the user's query and images.
+#         It is IMPORTANT that the question has same subject as the user query and similar topics.
+#         Give ONLY ONE Question in the following format:
+#         Examination and Year of Question - 
+#         Topics - 
+#         Question - 
+#         Options - 
+#         a)
+#         b)
+#         c)
+#         d)
+#         ENSURE NO FIELD IS LEFT EMPTY
+#         """
+#         content_message = f"Here are some questions similar to the user's query and images:\n{context}\n\nPlease provide a list of these questions in a user-friendly format."
+#         messages = [
+#             {"role": "system", "content": SYSTEM_PROMPT},
+#             {"role": "user", "content": content_message}
+#         ]
+
+#         response_obj = client.chat.completions.create(
+#             model=deployment_name,
+#             messages=messages,
+#             max_tokens=2000
+#         )
+
+#         response_text = response_obj.choices[0].message.content
+#         response_obj = client.chat.completions.create(
+#             model=deployment_name,
+#             messages=[
+#                 {"role":"system","content":"check if {response_text} has all values filled."
+#                 "ensure there are line endings as '\n'. "
+#                 "Respond as 1 if all fields are filled"
+#                 "Respond as 0 if few field are not filled"}
+#             ],
+#             max_tokens=2000
+#         )
+#         if "1" in response_obj.choices[0].message.content:
+#             return {"context": combined_context, "response": response_text}
+#         else:
+#             return get_single_question(content)
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
+
 @app.post("/get-single-question/")
-async def get_single_question(content: List[dict]):
+async def get_single_question(content: List[dict], depth: int = 0):
     """
     Endpoint to get a single question based on the user's query and images.
     """
+    # Check if recursion depth exceeds 4
+    if depth > 4:
+        raise HTTPException(status_code=500, detail="Maximum recursion depth exceeded")
+
     # Construct the context from content (text and images)
     context_parts = []
     for item in content:
@@ -250,24 +284,32 @@ async def get_single_question(content: List[dict]):
     try:
         # Generate embeddings for the combined context
         query_embedding = model.encode([combined_context])
-        distances, indices = index.search(query_embedding,3)
+        distances, indices = index.search(query_embedding, 5)
         results = [metadata[i] for i in indices[0]]
 
         # Format the retrieved questions
         context = "\n".join([f"Q: {result['question']}" for result in results])
-        SYSTEM_PROMPT = """You are a helpful assistant that provides similar questions based on the user's query and images.
-        Give ONLY ONE Question in the following format:
-        Examination and Year of Question - 
-        Topics - 
-        Question - 
-        Options - 
-        a)
-        b)
-        c)
-        d)
-        ENSURE NO FIELD IS LEFT EMPTY
+        SYSTEM_PROMPT = """You are a helpful assistant tasked with providing a question similar to the user's query and images.
+        Your responsibilities include:
+        1. Classify the user's query and images into one of the following subjects: Physics, Chemistry, or Math.
+        2. Ensure that the subject of the provided question matches the subject of the user's query.
+        3. Provide ONLY ONE question in the following structured format:
+        - Examination and Year of Question:
+        - Topics:
+        - Question:
+        - Options:
+            a)
+            b)
+            c)
+            d)
+
+        IMPORTANT:
+        - Ensure that the subject of the question is the same as the subject of the user's query.
+        - Ensure that all fields are filled and no field is left empty.
+        - Use clear and concise language.
+        - Maintain proper line endings using '\\n' to separate fields.
         """
-        content_message = f"Here are some questions similar to the user's query and images:\n{context}\n\nPlease provide a list of these questions in a user-friendly format."
+        content_message = f"This is user query and image:\n{context}."
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": content_message}
@@ -280,6 +322,20 @@ async def get_single_question(content: List[dict]):
         )
 
         response_text = response_obj.choices[0].message.content
-        return {"context": combined_context, "response": response_text}
+        response_obj = client.chat.completions.create(
+            model=deployment_name,
+            messages=[
+                {"role": "system", "content": f"check if {response_text} has all values filled."
+                 "ensure there are line endings as '\\n'. "
+                 "Respond as 1 if all fields are filled"
+                 "Respond as 0 if few field are not filled"}
+            ],
+            max_tokens=2000
+        )
+        if "1" in response_obj.choices[0].message.content:
+            return {"context": combined_context, "response": response_text}
+        else:
+            # Increment the depth and call the function recursively
+            return await get_single_question(content, depth=depth + 1)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")

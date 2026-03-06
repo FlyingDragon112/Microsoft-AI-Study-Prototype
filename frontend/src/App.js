@@ -187,11 +187,37 @@ function App() {
     }
   };
 
-  const toggleFileCheck = (idx) => {
-    setUploadedFiles(prev =>
-      prev.map((f, i) => i === idx ? { ...f, checked: !f.checked } : f)
-    );
+  const debounce = (func, delay) => {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => func(...args), delay);
+    };
   };
+
+  const toggleFileCheck = (idx) => {
+    setUploadedFiles((prev) => {
+      const updatedFiles = prev.map((f, i) =>
+        i === idx ? { ...f, checked: !f.checked } : f
+      );
+
+      // Debounced API call
+      debouncedUpdateTickedFiles(updatedFiles);
+
+      return updatedFiles;
+    });
+  };
+
+  const debouncedUpdateTickedFiles = useRef(
+    debounce((updatedFiles) => {
+      const tickedFiles = updatedFiles.filter((file) => file.checked).map((file) => file.name);
+      fetch("http://localhost:8000/ticked-files/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticked_files: tickedFiles }),
+      }).catch((error) => console.error("Error updating ticked files:", error));
+    }, 300)
+  ).current;
 
   const handleChat = async (query) => {
     setMessages(prev => [...prev, { role: 'user', text: query }]);

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Query
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
@@ -339,3 +339,63 @@ async def get_single_question(content: List[dict], depth: int = 0):
             return await get_single_question(content, depth=depth + 1)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
+
+import pandas as pd
+data = pd.read_csv(os.path.join(os.path.dirname(__file__), "data", "data_jee.csv"))
+
+@app.post("/get-quiz-questions/")
+async def get_quiz_questions(num_ques: int, subjects: List[str] = Query(None), topics: List[str] = Query(None)):
+    # Subjects: physics, chemistry, maths
+    print(subjects)
+    filtered = data.copy()
+    if subjects == []:
+        subjects = ['physics','chemistry','maths']
+    # Filter by subjects if provided
+    filtered = filtered[filtered["subject"].str.lower().isin([s.lower() for s in subjects])]
+
+    subject_groups = filtered.groupby("subject")
+    num_subjects = len(subject_groups)
+    base_per_subject = num_ques // num_subjects
+    remainder = num_ques % num_subjects
+
+    sampled_frames = []
+    for i, (subject, group) in enumerate(subject_groups):
+        # Give one extra question to the first `remainder` subjects
+        n = base_per_subject + (1 if i < remainder else 0)
+        n = min(n, len(group))  # can't sample more than available
+        sampled_frames.append(group.sample(n=n))
+
+    result = pd.concat(sampled_frames).sample(frac=1).reset_index(drop=True)  # shuffle
+
+    # Return as list of dicts
+    questions = []
+    for _, row in result.iterrows():
+        options = row["options"]
+        if isinstance(options, str):
+            try:
+                options = eval(options)
+            except Exception:
+                pass
+        # Map options list into individual optionA/B/C/D fields
+        options_map = {}
+        if isinstance(options, list):
+            for opt in options:
+                if isinstance(opt, dict):
+                    identifier = opt.get("identifier", "").upper()
+                    options_map[f"option{identifier}"] = opt.get("content", "")
+
+        questions.append({
+            "subject": row["subject"],
+            "chapter": row.get("chapter", ""),
+            "topic": row.get("topic", ""),
+            "question": row["question"],
+            "optionA": options_map.get("optionA", ""),
+            "optionB": options_map.get("optionB", ""),
+            "optionC": options_map.get("optionC", ""),
+            "optionD": options_map.get("optionD", ""),
+            "correct_option": row.get("correct_option", ""),
+            "explanation": row.get("explanation", ""),
+            "paper_id": row.get("paper_id", ""),
+        })
+
+    return questions

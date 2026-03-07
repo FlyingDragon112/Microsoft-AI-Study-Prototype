@@ -4,8 +4,17 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import { MathJaxContext } from 'better-react-mathjax';
 import Timer from './Timer';
 import TodoList from "./TodoList";
+import Quiz from "./Quiz";
+
+const MATHJAX_CONFIG = {
+  tex: {
+    inlineMath: [["$", "$"], ["\\(", "\\)"]],
+    displayMath: [["$$", "$$"], ["\\[", "\\]"]],
+  },
+};
 
 function ChatBox({ messages, onSend }) {
   const [ttsLanguage, setTtsLanguage] = useState("en-US");
@@ -17,7 +26,7 @@ function ChatBox({ messages, onSend }) {
   ];
 
   const handleTextToSpeech = async (text) => {
-    console.log(`Selected language for TTS: ${ttsLanguage}`); // Debugging log
+    console.log(`Selected language for TTS: ${ttsLanguage}`);
 
     if (!text.trim()) {
       alert("Please enter text for text-to-speech.");
@@ -277,6 +286,17 @@ function App() {
     updateTickedFiles();
   }, [updateTickedFiles]);
 
+  const handleModeChange = (e) => {
+    const selectedMode = e.target.value;
+    setMode(selectedMode);
+
+    if (selectedMode === "Quiz Mode") {
+      // Logic to start quiz mode
+      console.log("Quiz Mode started");
+      // Add your quiz initialization logic here
+    }
+  };
+
   return (
     <div className="crackit-app">
       {/* Header */}
@@ -394,13 +414,13 @@ function App() {
         {/* Center Content */}
         <div className="crackit-content">
           <div className="crackit-content-header">
-            <select className="crackit-content-header-dropdown" value={mode} onChange={e => setMode(e.target.value)}>
+            <select className="crackit-content-header-dropdown" value={mode} onChange={handleModeChange}>
               <option>Explanation Mode</option>
               <option>Quiz Mode</option>
               <option>Revision Mode</option>
             </select>
           </div>
-          <ChatBox messages={messages} onSend={handleChat} />
+          {mode === "Quiz Mode" ? <Quiz /> : <ChatBox messages={messages} onSend={handleChat} />}
         </div>
 
         {/* Right Tools Panel */}
@@ -472,4 +492,10 @@ function App() {
   );
 }
 
-export default App;
+const WrappedApp = () => (
+  <MathJaxContext config={MATHJAX_CONFIG}>
+    <App />
+  </MathJaxContext>
+);
+
+export default WrappedApp;

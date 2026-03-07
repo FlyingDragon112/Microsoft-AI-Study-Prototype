@@ -1,50 +1,50 @@
-import pandas as pd
-from sentence_transformers import SentenceTransformer
-import faiss
-import numpy as np
-import json
+# import pandas as pd
+# from sentence_transformers import SentenceTransformer
+# import faiss
+# import numpy as np
+# import json
 
-# Step 1: Load the dataset
-dataset_path = r"C:\Users\Arnav Agarwal\Desktop\Microsoft Hack\backend\data\data_jee.csv"  # Replace with your dataset path
-data = pd.read_csv(dataset_path)
+# # Step 1: Load the dataset
+# dataset_path = r"C:\Users\Arnav Agarwal\Desktop\Microsoft Hack\backend\data\data_jee.csv"  # Replace with your dataset path
+# data = pd.read_csv(dataset_path)
 
-# Step 2: Initialize the SentenceTransformer model
-model = SentenceTransformer('multi-qa-mpnet-base-dot-v1')  # Advanced model for semantic search
-# Convert the 'options' column to the desired string format
-data['options'] = data['options'].apply(
-    lambda x: "\n".join([f"{opt['identifier']}) {opt['content']}" for opt in eval(x)])
-)
-# Step 3: Preprocess and create embeddings
-# Combine relevant fields into a single text for embedding
-data['combined_text'] = (
-    f"Subject: {data['subject']} , "
-    f"Chapter: {data['chapter']} , "
-    f"Topic: {data['topic']} , "
-    f"Question: {data['question']} , "
-    f"Options:\n{data['options']} , "  # Options are now on separate lines
-    f"Correct Option: {data['correct_option']} , "
-    f"Explanation: {data['explanation']} , "
-    f"Examination and Year: {data['paper_id']},"
-)
-texts = data['combined_text'].tolist()
+# # Step 2: Initialize the SentenceTransformer model
+# model = SentenceTransformer('multi-qa-mpnet-base-dot-v1')  # Advanced model for semantic search
+# # Convert the 'options' column to the desired string format
+# data['options'] = data['options'].apply(
+#     lambda x: "\n".join([f"{opt['identifier']}) {opt['content']}" for opt in eval(x)])
+# )
+# # Step 3: Preprocess and create embeddings
+# # Combine relevant fields into a single text for embedding
+# data['combined_text'] = (
+#     f"Subject: {data['subject']} , "
+#     f"Chapter: {data['chapter']} , "
+#     f"Topic: {data['topic']} , "
+#     f"Question: {data['question']} , "
+#     f"Options:\n{data['options']} , "  # Options are now on separate lines
+#     f"Correct Option: {data['correct_option']} , "
+#     f"Explanation: {data['explanation']} , "
+#     f"Examination and Year: {data['paper_id']},"
+# )
+# texts = data['combined_text'].tolist()
 
-# Generate embeddings
-embeddings = model.encode(texts, show_progress_bar=True)
+# # Generate embeddings
+# embeddings = model.encode(texts, show_progress_bar=True)
 
-# Step 4: Create a FAISS index
-dimension = embeddings.shape[1]  # Dimension of the embeddings
-index = faiss.IndexFlatL2(dimension)  # L2 distance metric
-index.add(np.array(embeddings))  # Add embeddings to the index
+# # Step 4: Create a FAISS index
+# dimension = embeddings.shape[1]  # Dimension of the embeddings
+# index = faiss.IndexFlatL2(dimension)  # L2 distance metric
+# index.add(np.array(embeddings))  # Add embeddings to the index
 
-# Save the index for later use
-faiss.write_index(index, "faiss_index.bin")
+# # Save the index for later use
+# faiss.write_index(index, "faiss_index.bin")
 
-# Save metadata for retrieval
-metadata = data.to_dict(orient='records')
-with open("metadata.json", "w") as f:
-    json.dump(metadata, f)
+# # Save metadata for retrieval
+# metadata = data.to_dict(orient='records')
+# with open("metadata.json", "w") as f:
+#     json.dump(metadata, f)
 
-print("FAISS index and metadata saved successfully!")
+# print("FAISS index and metadata saved successfully!")
 
 
 # import pandas as pd

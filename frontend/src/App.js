@@ -412,7 +412,7 @@ function App() {
         </div>
 
         {/* Center Content */}
-        <div className="crackit-content">
+        <div className="crackit-content" style={mode !== "Quiz Mode" ? { backgroundImage: `url(${process.env.PUBLIC_URL}/Group5.png)`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' } : {}}>
           <div className="crackit-content-header">
             <select className="crackit-content-header-dropdown" value={mode} onChange={handleModeChange}>
               <option>Explanation Mode</option>

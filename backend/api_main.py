@@ -346,7 +346,6 @@ data = pd.read_csv(os.path.join(os.path.dirname(__file__), "data", "data_jee.csv
 @app.post("/get-quiz-questions/")
 async def get_quiz_questions(num_ques: int, subjects: List[str] = Query(None), topics: List[str] = Query(None)):
     # Subjects: physics, chemistry, maths
-    print(subjects)
     filtered = data.copy()
     if subjects == []:
         subjects = ['physics','chemistry','maths']

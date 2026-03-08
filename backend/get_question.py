@@ -137,3 +137,25 @@
 
 # response = query_with_llm(content, top_k=3)
 # print("LLM Response:", response)
+
+# import pandas as pd
+# import json
+
+# # Load the dataset
+# dataset_path = r"C:\Users\Arnav Agarwal\Desktop\Microsoft Hack\backend\data\data_jee.csv"
+# data = pd.read_csv(dataset_path)
+
+# # Initialize the result dictionary
+# result = {}
+
+# # Group by subject
+# for subject, group in data.groupby('subject'):
+#     chapters = group['chapter'].dropna().unique().tolist()
+#     topics = group['topic'].dropna().unique().tolist()
+#     result[subject] = {
+#         'Chapter': chapters,
+#         'Topics': topics
+#     }
+# with open('subject_chapters_topics.json', 'w') as f:
+#     json.dump(result, f, indent=4)
+

@@ -108,7 +108,8 @@ async def chat(request: ChatRequest):
         # Call get_single_question if ticked_files is not empty
         single_question_response = None
         if ticked_files:
-            single_question_response = await get_single_question(content)
+            #single_question_response = await get_single_question(content)
+            single_question_response = await get_user_question_info(content)
         print("worked till here")
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT2},
@@ -214,7 +215,144 @@ index = faiss.read_index(faiss_index_path)
 with open(metadata_path, "r") as f:
     metadata = json.load(f)
 
-# Get PYQ Recommended Question
+import json as json_mod
+SUBJECT_CHAPTERS_TOPICS_PATH = os.path.join(os.path.dirname(__file__), "data", "subject_chapters_topics.json")
+with open(SUBJECT_CHAPTERS_TOPICS_PATH, "r", encoding="utf-8") as f:
+    SUBJECT_CHAPTERS_TOPICS = json_mod.load(f)
+
+def extract_subject_chapter_topics(content):
+    """
+    Use LLM to extract subject, chapter, and topics from user query and images.
+    Returns: dict with keys 'subject', 'chapter', 'topics' (list)
+    """
+    context_parts = []
+    for item in content:
+        if item["type"] == "text":
+            context_parts.append(f"User Query: {item['text']}")
+        elif item["type"] == "image_url":
+            context_parts.append(f"Image Context: {item['image_url']['url']}")
+            
+    combined_context = "\n".join(context_parts)
+    system_prompt = (
+        "You are an expert at classifying JEE/NEET exam questions into subject, chapter, and topics. "
+        "You MUST use ONLY the exact values for subject, chapter, and topics from this JSON: "
+        "Given the following user query and context, do the following:\n"
+        "1. Identify the most likely subject (physics, chemistry, or maths) based on keywords in the query. "
+        "   - For example, if the query mentions 'force', 'current', 'motion', 'electric', 'magnet', use 'physics'. "
+        "   - If it mentions 'atom', 'reaction', 'acid', 'bond', use 'chemistry'. "
+        "   - If it mentions 'integral', 'matrix', 'probability', 'equation', use 'maths'.\n"
+        "2. Choose the most relevant chapter and topics for that subject, again using ONLY the allowed values.\n"
+        "3. If the query is ambiguous, pick the most probable subject based on keywords, but NEVER guess randomly.\n"
+        "4. Output STRICTLY as JSON: {\"subject\": ..., \"chapter\": ..., \"topics\": [...]}.\n"
+        "5. If you cannot determine a chapter or topic, leave them as empty strings or empty lists, but NEVER invent new names.\n"
+        "Examples:\n"
+        "Query: 'Find the force on a charge in an electric field.'\n"
+        "Output: {\"subject\": \"physics\", \"chapter\": \"electrostatics\", \"topics\": [\"electric-field-and-electric-field-intensity\"]}\n"
+        "Query: 'Calculate the pH of a solution.'\n"
+        "Output: {\"subject\": \"chemistry\", \"chapter\": \"ionic-equilibrium\", \"topics\": [\"ph,-buffer-and-indicators\"]}\n"
+        "Query: 'Evaluate the integral of x^2.'\n"
+        "Output: {\"subject\": \"maths\", \"chapter\": \"indefinite-integrals\", \"topics\": [\"standard-integral\"]}\n"
+        "Now, classify the following query and context:"
+    )
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": combined_context}
+    ]
+    response_obj = client.chat.completions.create(
+        model=deployment_name,
+        messages=messages,
+        max_tokens=400
+    )
+    # Try to parse JSON from response
+    import re
+    resp = response_obj.choices[0].message.content
+    try:
+        # Extract JSON from response
+        match = re.search(r'\{.*\}', resp, re.DOTALL)
+        if match:
+            return json_mod.loads(match.group(0))
+        return {}
+    except Exception:
+        return {}
+
+# Get PYQ Recommended Question (now uses LLM extraction and filtering)
+@app.post("/get-single-question/")
+async def get_user_question_info(content):
+    try:
+        extracted = extract_subject_chapter_topics(content)
+        filtered_df = data.copy()
+        if extracted.get('subject'):
+            filtered_df = filtered_df[filtered_df['subject'].str.lower() == extracted['subject'].lower()]
+        if extracted.get('chapter'):
+            filtered_df = filtered_df[filtered_df['chapter'].str.lower() == extracted['chapter'].lower()]
+        if extracted.get('topics') and isinstance(extracted['topics'], list) and extracted['topics']:
+            filtered_df = filtered_df[filtered_df['topic'].str.lower().isin([t.lower() for t in extracted['topics']])]
+        if filtered_df.empty:
+            filtered_df = data.copy()
+        print("Extracted subject/chapter/topics:", extracted)
+        texts = (
+            filtered_df['question'].astype(str)
+            + ' ' + filtered_df['options'].astype(str)
+            + ' ' + filtered_df['explanation'].astype(str)
+        ).tolist()
+        meta = filtered_df.to_dict(orient='records')
+
+        context_parts = []
+        for item in content:
+            if item["type"] == "text":
+                context_parts.append(f"User Query: {item['text']}")
+            elif item["type"] == "image_url":
+                context_parts.append(f"Image Context: {item['image_url']['url']}")
+        combined_context = "\n".join(context_parts)
+        query_embedding = model.encode([combined_context])
+
+        import numpy as np
+        if texts:
+            embeddings = model.encode(texts)
+            temp_index = faiss.IndexFlatL2(embeddings.shape[1])
+            temp_index.add(np.array(embeddings))
+            distances, indices = temp_index.search(query_embedding, min(5, len(texts)))
+            results = [meta[i] for i in indices[0]]
+        else:
+            results = []
+
+        context = "\n".join([f"Q: {result['question']}" for result in results])
+        SYSTEM_PROMPT = """
+        You are a JEE/NEET exam question provider. Given similar questions from a database, pick the BEST matching one and reformat it.
+
+        STRICT OUTPUT FORMAT (copy this exactly, fill every field):
+        Examination and Year of Question: [exam name] [year]
+        Topics: [comma-separated topics]
+        Question: [full question text on one line]
+        Options:
+        a) [option text]
+        b) [option text]
+        c) [option text]
+        d) [option text]
+
+        RULES:
+        1. The subject (Physics/Chemistry/Math) of your question MUST match the user's query subject.
+        2. Every field MUST be filled - no empty or placeholder values.
+        3. All 4 options (a, b, c, d) MUST be present with actual content.
+        4. If the question has math, write it plainly: x^2, sqrt(), a/b.
+        5. Output ONLY the formatted question. No explanations, no preamble, no extra text.
+        6. If you cannot determine the exam/year, use "Sample Question" as default.
+        7. Do NOT leave any field blank under any circumstances."""
+        content_message = f"Here are some questions similar to the user's query and images:\n{context}\n\nPlease provide the best matching question in the strict format."
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": content_message}
+        ]
+        response_obj = client.chat.completions.create(
+            model=deployment_name,
+            messages=messages,
+            max_tokens=2000
+        )
+        return {"context": combined_context, "response": response_obj.choices[0].message.content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
+     
+
 @app.post("/get-single-question/")
 async def get_single_question(content: List[dict], depth: int = 0):
     """

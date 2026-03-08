@@ -1,36 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import "./revision.css";
 
-const sampleFlashcards = [
+const fallbackFlashcards = [
   { question: "What is the Nernst Equation?", answer: "E = E° - (RT/nF) ln Q, where E is the cell potential, E° is the standard cell potential, R is the gas constant, T is temperature, n is the number of electrons transferred, F is Faraday's constant, and Q is the reaction quotient.", topic: "Electrochemistry" },
   { question: "What is Faraday's First Law of Electrolysis?", answer: "The mass of a substance deposited at an electrode during electrolysis is directly proportional to the quantity of electricity passed through the electrolyte.", topic: "Electrochemistry" },
   { question: "Define standard electrode potential.", answer: "The potential difference developed between the metal electrode and the standard hydrogen electrode when the concentration of the metal ion solution is 1 M, temperature is 298 K, and pressure is 1 atm.", topic: "Electrochemistry" },
   { question: "What is an electrochemical cell?", answer: "A device that converts chemical energy into electrical energy through spontaneous redox reactions. It consists of two half-cells connected by a salt bridge.", topic: "Electrochemistry" },
   { question: "What is the role of a salt bridge?", answer: "A salt bridge maintains electrical neutrality in the two half-cells by allowing the flow of ions, thereby completing the electrical circuit.", topic: "Electrochemistry" },
-  { question: "Define molar conductivity.", answer: "Molar conductivity is the conductivity of a solution divided by the molar concentration of the electrolyte. It is denoted by Λm and its unit is S cm² mol⁻¹.", topic: "Electrochemistry" },
-  { question: "State Kohlrausch's Law.", answer: "The limiting molar conductivity of an electrolyte is the sum of the individual contributions of the cation and anion of the electrolyte: Λ°m = ν+ λ°+ + ν− λ°−.", topic: "Electrochemistry" },
-  { question: "What is EMF of a cell?", answer: "Electromotive force (EMF) is the potential difference between the two electrodes of a galvanic cell when no current flows through the circuit. It is measured in volts.", topic: "Electrochemistry" },
-  { question: "Define Gibbs energy change for a cell reaction.", answer: "ΔG = −nFE_cell, where n is the number of moles of electrons exchanged, F is Faraday's constant, and E_cell is the EMF of the cell.", topic: "Electrochemistry" },
-  { question: "What is a fuel cell?", answer: "A fuel cell is a galvanic cell that converts the chemical energy of a fuel (like hydrogen) directly into electrical energy. The reactants are continuously supplied from an external source.", topic: "Electrochemistry" },
-  { question: "What is corrosion?", answer: "Corrosion is the process of deterioration of metals due to electrochemical reactions with the environment, forming oxides, hydroxides, or sulfides on the surface.", topic: "Electrochemistry" },
-  { question: "Define electrolysis.", answer: "Electrolysis is the process of using electrical energy to drive a non-spontaneous chemical reaction. It involves passing electric current through an electrolyte.", topic: "Electrochemistry" },
-  { question: "What is the Nernst Equation for a single electrode?", answer: "E = E° - (RT/nF) ln [M^n+], which at 298 K simplifies to E = E° - (0.0591/n) log [M^n+].", topic: "Electrochemistry" },
-  { question: "What is an electrolytic cell?", answer: "An electrolytic cell is a device that uses electrical energy to carry out non-spontaneous chemical reactions. The anode is positive and cathode is negative.", topic: "Electrochemistry" },
-  { question: "Define conductivity of a solution.", answer: "Conductivity (κ) is the reciprocal of resistivity. It measures the ability of a solution to conduct electric current, with unit S cm⁻¹.", topic: "Electrochemistry" },
-  { question: "What is Faraday's Second Law?", answer: "When the same quantity of electricity is passed through different electrolytes, the masses of substances deposited are proportional to their equivalent weights.", topic: "Electrochemistry" },
-  { question: "What is the standard hydrogen electrode?", answer: "SHE is a reference electrode with an assigned potential of 0.00 V. It consists of a platinum electrode in contact with 1 M H⁺ solution and H₂ gas at 1 atm.", topic: "Electrochemistry" },
-  { question: "Define cell constant.", answer: "Cell constant is the ratio of the distance between the electrodes (l) to the area of cross-section (A) of the electrode. It is given by l/A with unit cm⁻¹.", topic: "Electrochemistry" },
-  { question: "What is the electrochemical series?", answer: "The arrangement of elements in order of their standard electrode potentials, from the most negative to the most positive. It helps predict the feasibility of redox reactions.", topic: "Electrochemistry" },
-  { question: "Define overpotential.", answer: "Overpotential is the extra potential (beyond the theoretical value) needed to drive an electrochemical reaction at a certain rate. It arises due to kinetic barriers at the electrode surface.", topic: "Electrochemistry" },
 ];
 
 function Revision() {
+  const [flashcards, setFlashcards] = useState(fallbackFlashcards);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [markedForRevision, setMarkedForRevision] = useState(new Set());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const total = sampleFlashcards.length;
-  const card = sampleFlashcards[currentIndex];
+  useEffect(() => {
+    const fetchFlashcards = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("http://localhost:8000/get-flashcards-data", { method: "POST" });
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setFlashcards(data);
+        }
+      } catch (err) {
+        setError("Could not load flashcards from server. Showing sample cards.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFlashcards();
+  }, []);
+
+  const total = flashcards.length;
+  const card = flashcards[currentIndex];
   const progressPercent = ((currentIndex + 1) / total) * 100;
 
   const goNext = () => {
@@ -59,8 +69,17 @@ function Revision() {
     });
   };
 
+  if (loading) {
+    return (
+      <div className="revision-container">
+        <div className="revision-loading">Loading flashcards...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="revision-container">
+      {error && <div className="revision-error">{error}</div>}
       {/* Progress bar area */}
       <div className="revision-progress-bar-area">
         <div className="revision-progress-info">
@@ -80,14 +99,18 @@ function Revision() {
           <div className="revision-flashcard-inner">
             <div className="revision-flashcard-front">
               <div className="revision-flashcard-label">Question</div>
-              <div className="revision-flashcard-question">{card.question}</div>
+              <div className="revision-flashcard-question">
+                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{card.question}</ReactMarkdown>
+              </div>
               <div className="revision-flashcard-hint">(Try to recall before flipping)</div>
               <div className="revision-flashcard-divider" />
               <button className="revision-flip-btn" onClick={e => { e.stopPropagation(); setFlipped(true); }}>Flip Card</button>
             </div>
             <div className="revision-flashcard-back">
               <div className="revision-flashcard-label">Answer</div>
-              <div className="revision-flashcard-answer">{card.answer}</div>
+              <div className="revision-flashcard-answer">
+                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{card.answer}</ReactMarkdown>
+              </div>
               <div className="revision-flashcard-divider" />
               <button className="revision-flip-btn" onClick={e => { e.stopPropagation(); setFlipped(false); }}>Flip Back</button>
             </div>

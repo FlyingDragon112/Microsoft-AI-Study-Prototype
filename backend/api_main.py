@@ -106,6 +106,7 @@ async def chat(request: ChatRequest):
         print("worked till here")
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT2},
+            {"role": "user", "content": f"Previous conversation:\n{context}\n\nCurrent query:"},
             {"role": "user", "content": content}
         ]
 
@@ -116,11 +117,17 @@ async def chat(request: ChatRequest):
         )
 
         response_text = response_obj.choices[0].message.content if hasattr(response_obj, 'choices') else str(response_obj)
-        context_window.add_message(f"Bot: {response_text}")
 
         # Combine the LLM response with the single question response if available
         if single_question_response:
-            response_text += f"\n\nAdditional Question:\n{single_question_response['response']}"
+            sq = single_question_response['response']
+            # Ensure each field starts on a new line
+            for label in ["Examination and Year of Question:", "Topics:", "Question:", "Options:", "a)", "b)", "c)", "d)"]:
+                sq = sq.replace(label, f"\n{label}")
+            sq = sq.strip()
+            response_text += f"\n\n---\n\n**Additional Question:**\n\n{sq}"
+
+        context_window.add_message(f"Bot: {response_text}")
 
         print({"query": request.query, "response": response_text, "context": context})
         return {"query": request.query, "response": response_text, "context": context}
@@ -289,26 +296,27 @@ async def get_single_question(content: List[dict], depth: int = 0):
 
         # Format the retrieved questions
         context = "\n".join([f"Q: {result['question']}" for result in results])
-        SYSTEM_PROMPT = """You are a helpful assistant tasked with providing a question similar to the user's query and images.
-        Your responsibilities include:
-        1. Classify the user's query and images into one of the following subjects: Physics, Chemistry, or Math.
-        2. Ensure that the subject of the provided question matches the subject of the user's query.
-        3. Provide ONLY ONE question in the following structured format:
-        - Examination and Year of Question:
-        - Topics:
-        - Question:
-        - Options:
-            a)
-            b)
-            c)
-            d)
+        SYSTEM_PROMPT = """
+        You are a JEE/NEET exam question provider. Given similar questions from a database, pick the BEST matching one and reformat it.
 
-        IMPORTANT:
-        - Ensure that the subject of the question is the same as the subject of the user's query.
-        - Ensure that all fields are filled and no field is left empty.
-        - Use clear and concise language.
-        - Maintain proper line endings using '\\n' to separate fields.
-        """
+        STRICT OUTPUT FORMAT (copy this exactly, fill every field):
+        Examination and Year of Question: [exam name] [year]
+        Topics: [comma-separated topics]
+        Question: [full question text on one line]
+        Options:
+        a) [option text]
+        b) [option text]
+        c) [option text]
+        d) [option text]
+
+        RULES:
+        1. The subject (Physics/Chemistry/Math) of your question MUST match the user's query subject.
+        2. Every field MUST be filled - no empty or placeholder values.
+        3. All 4 options (a, b, c, d) MUST be present with actual content.
+        4. If the question has math, write it plainly: x^2, sqrt(), a/b.
+        5. Output ONLY the formatted question. No explanations, no preamble, no extra text.
+        6. If you cannot determine the exam/year, use "Sample Question" as default.
+        7. Do NOT leave any field blank under any circumstances."""
         content_message = f"This is user query and image:\n{context}."
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -398,3 +406,95 @@ async def get_quiz_questions(num_ques: int, subjects: List[str] = Query(None), t
         })
 
     return questions
+
+@app.post('/get-flashcards-data')
+async def get_flashcards_data():
+    if ticked_files_store == []:
+        return []
+
+    # Read content from ticked files
+    file_contents = []
+    image_files = []
+    for filename in ticked_files_store:
+        file_path = os.path.join("uploads", filename)
+        if not os.path.exists(file_path):
+            continue
+        if filename.lower().endswith((".jpg", ".jpeg", ".png", ".gif")):
+            image_files.append(filename)
+            continue
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                file_contents.append(f.read())
+        except Exception:
+            pass
+
+    if not file_contents and not image_files:
+        return []
+
+    combined_text = "\n\n".join(file_contents)
+    # Truncate to avoid token limits
+    combined_text = combined_text[:8000]
+
+    FLASHCARD_PROMPT = (
+        "You are a flashcard generator for students preparing for JEE/NEET exams. "
+        "Given the following study material, generate 10 flashcards as a JSON array. "
+        "Each flashcard must have exactly these fields: \"question\", \"answer\", \"topic\". "
+        "The topic should be the main chapter/concept the question belongs to. "
+        "For any math expressions, use LaTeX wrapped in dollar signs: $...$ for inline math. "
+        "Do NOT use parentheses like \\( \\) for math. Use ONLY dollar signs $...$ as math delimiters. "
+        "CRITICAL: Every backslash in LaTeX must be doubled in the JSON string. "
+        "Example: [{\"question\": \"What is $E = E^{\\\\circ} - \\\\frac{RT}{nF} \\\\ln Q$ called?\", "
+        "\"answer\": \"The Nernst Equation: $E = E^{\\\\circ} - \\\\frac{RT}{nF} \\\\ln Q$\", "
+        "\"topic\": \"Electrochemistry\"}] "
+        "Return ONLY the JSON array, no markdown fences, no extra text."
+    )
+
+    # Build content with text and images
+    content = []
+    if combined_text.strip():
+        content.append({"type": "text", "text": combined_text})
+    for image in image_files:
+        image_path = f"uploads/{image}"
+        data_url = local_image_to_data_url(image_path)
+        content.append({"type": "image_url", "image_url": {"url": data_url}})
+
+    if not content:
+        return []
+
+    try:
+        response_obj = client.chat.completions.create(
+            model=deployment_name,
+            messages=[
+                {"role": "system", "content": FLASHCARD_PROMPT},
+                {"role": "user", "content": content}
+            ],
+            max_tokens=4000
+        )
+        response_text = response_obj.choices[0].message.content
+        print(f"Flashcards raw response: {response_text}")
+
+        # Try to parse as JSON
+        import json as json_mod
+        import re as re_mod
+        # Strip markdown code fences if present
+        cleaned = response_text.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("\n", 1)[1] if "\n" in cleaned else cleaned[3:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+        cleaned = cleaned.strip()
+
+        # Fix backslash escaping for LaTeX in JSON:
+        # Protect already-doubled backslashes, then double all remaining single ones
+        cleaned = cleaned.replace('\\\\', '\x00DBL\x00')
+        cleaned = cleaned.replace('\\"', '\x00QT\x00')
+        cleaned = cleaned.replace('\\', '\\\\')
+        cleaned = cleaned.replace('\x00DBL\x00', '\\\\')
+        cleaned = cleaned.replace('\x00QT\x00', '\\"')
+
+        flashcards = json_mod.loads(cleaned)
+        return flashcards
+    except Exception as e:
+        print(f"Error in /get-flashcards-data: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generating flashcards: {str(e)}")
+    

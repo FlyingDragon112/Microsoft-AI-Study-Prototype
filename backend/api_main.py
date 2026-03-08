@@ -12,6 +12,7 @@ from typing import List
 import base64
 from mimetypes import guess_type
 
+# Load Model
 endpoint = "https://firsttimerschat1.openai.azure.com/openai/v1"
 deployment_name = "gpt-4.1-nano"
 api_key = "BKODepscxWslIBsfK9Ty9sBR6Vvrhj4CziEHmeEG1OkzkUoaIZ41JQQJ99CCACqBBLyXJ3w3AAABACOG34DF"
@@ -21,6 +22,7 @@ client = OpenAI(
     api_key=api_key
 )
 
+# Setup FastAPI
 load_dotenv()
 app = FastAPI()
 
@@ -32,6 +34,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Cleanup Uploads Folder
 if os.path.exists("uploads"):
     shutil.rmtree("uploads")
 os.makedirs("uploads", exist_ok=True)
@@ -40,6 +43,7 @@ os.makedirs("uploads", exist_ok=True)
 def health_check():
     return {"status": "ok"}
 
+# Define Base Models
 class ChatRequest(BaseModel):
     query: str
 
@@ -58,6 +62,7 @@ class ContextWindow:
 
 context_window = ContextWindow(size=50)
 
+# Trial Prompts
 SYSTEM_PROMPT = (
     "You are a helpful tutor specialising in Math, Physics and Chemistry. When explaining solutions, "
     "format your response in plain text. Do NOT use LaTeX, dollar signs ($), "
@@ -75,6 +80,7 @@ SYSTEM_PROMPT2 = (
     "Clearly mark end of lines with '\n'"   
 )
 
+# Chat Based APIs
 @app.post("/chat/")
 async def chat(request: ChatRequest):
     try:
@@ -138,6 +144,7 @@ async def chat(request: ChatRequest):
         # Return a 500 Internal Server Error response
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
+# Speech Related APIs
 @app.post("/speech-to-text/")
 async def speech_to_text():
     text = recognize_from_microphone()
@@ -151,6 +158,7 @@ async def text_to_speech(request: Request):
     convert_text_to_speech(text, language)
     return {"status": "ok"}
 
+# Upload File
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
     try:
@@ -163,6 +171,7 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
 
+# Get Information Related to Context Files
 class TickedFiles(BaseModel):
     ticked_files: List[str]
 
@@ -192,82 +201,20 @@ def local_image_to_data_url(image_path):
 
     return f"data:{mime_type};base64,{base64_encoded_data}"
 
-
+# Quiz
+# Load the Model
 from sentence_transformers import SentenceTransformer
 import faiss
 import json 
 model = SentenceTransformer('multi-qa-mpnet-base-dot-v1')  # Same model used for embeddings
-index = faiss.read_index(r"C:\Users\Arnav Agarwal\Desktop\Microsoft Hack\faiss_index.bin")
-with open(r"C:\Users\Arnav Agarwal\Desktop\Microsoft Hack\metadata.json", "r") as f:
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+faiss_index_path = os.path.join(BASE_DIR, "faiss_index.bin")
+metadata_path = os.path.join(BASE_DIR, "metadata.json")
+index = faiss.read_index(faiss_index_path)
+with open(metadata_path, "r") as f:
     metadata = json.load(f)
 
-# @app.post("/get-single-question/")
-# async def get_single_question(content: List[dict]):
-#     """
-#     Endpoint to get a single question based on the user's query and images.
-#     """
-#     # Construct the context from content (text and images)
-#     context_parts = []
-#     for item in content:
-#         if item["type"] == "text":
-#             context_parts.append(f"User Query: {item['text']}")
-#         elif item["type"] == "image_url":
-#             context_parts.append(f"Image Context: {item['image_url']['url']}")
-
-#     # Combine all parts into a single context string
-#     combined_context = "\n".join(context_parts)
-
-#     try:
-#         # Generate embeddings for the combined context
-#         query_embedding = model.encode([combined_context])
-#         distances, indices = index.search(query_embedding,3)
-#         results = [metadata[i] for i in indices[0]]
-
-#         # Format the retrieved questions
-#         context = "\n".join([f"Q: {result['question']}" for result in results])
-#         SYSTEM_PROMPT = """You are a helpful assistant that provides similar questions based on the user's query and images.
-#         It is IMPORTANT that the question has same subject as the user query and similar topics.
-#         Give ONLY ONE Question in the following format:
-#         Examination and Year of Question - 
-#         Topics - 
-#         Question - 
-#         Options - 
-#         a)
-#         b)
-#         c)
-#         d)
-#         ENSURE NO FIELD IS LEFT EMPTY
-#         """
-#         content_message = f"Here are some questions similar to the user's query and images:\n{context}\n\nPlease provide a list of these questions in a user-friendly format."
-#         messages = [
-#             {"role": "system", "content": SYSTEM_PROMPT},
-#             {"role": "user", "content": content_message}
-#         ]
-
-#         response_obj = client.chat.completions.create(
-#             model=deployment_name,
-#             messages=messages,
-#             max_tokens=2000
-#         )
-
-#         response_text = response_obj.choices[0].message.content
-#         response_obj = client.chat.completions.create(
-#             model=deployment_name,
-#             messages=[
-#                 {"role":"system","content":"check if {response_text} has all values filled."
-#                 "ensure there are line endings as '\n'. "
-#                 "Respond as 1 if all fields are filled"
-#                 "Respond as 0 if few field are not filled"}
-#             ],
-#             max_tokens=2000
-#         )
-#         if "1" in response_obj.choices[0].message.content:
-#             return {"context": combined_context, "response": response_text}
-#         else:
-#             return get_single_question(content)
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
-
+# Get PYQ Recommended Question
 @app.post("/get-single-question/")
 async def get_single_question(content: List[dict], depth: int = 0):
     """
@@ -351,6 +298,7 @@ async def get_single_question(content: List[dict], depth: int = 0):
 import pandas as pd
 data = pd.read_csv(os.path.join(os.path.dirname(__file__), "data", "data_jee.csv"))
 
+# Get Quiz Questions
 @app.post("/get-quiz-questions/")
 async def get_quiz_questions(num_ques: int, subjects: List[str] = Query(None), topics: List[str] = Query(None)):
     # Subjects: physics, chemistry, maths
@@ -407,6 +355,7 @@ async def get_quiz_questions(num_ques: int, subjects: List[str] = Query(None), t
 
     return questions
 
+# Generate Flashcards
 @app.post('/get-flashcards-data')
 async def get_flashcards_data():
     if ticked_files_store == []:

@@ -76,11 +76,6 @@ def convert_text_to_speech(text, language):
     }
     # Translate if not English
     if language != "en-US":
-        # Set your Azure Translator credentials
-        translator_key = os.getenv("TRANSLATOR_KEY")
-        translator_endpoint = os.getenv("TRANSLATOR_ENDPOINT")  # e.g., "https://api.cognitive.microsofttranslator.com/"
-        region = os.getenv("TRANSLATOR_REGION")  # e.g., "centralindia"
-        # Map language code to Azure Translator code
         lang_map = {"hi-IN": "hi", "bn-IN": "bn", "gu-IN": "gu"}
         to_lang = lang_map.get(language, "hi")
         text = translate_text_azure(text, to_lang)

@@ -1,0 +1,229 @@
+.revision-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #F2F4F6;
+  border-radius: 16px;
+  overflow: hidden;
+  padding: 20px;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+  gap: 16px;
+}
+
+/* Progress bar area */
+.revision-progress-bar-area {
+  width: 100%;
+  max-width: 692px;
+  background: #C5E0E9;
+  border-radius: 8px;
+  padding: 14px 16px 18px;
+  box-sizing: border-box;
+}
+
+.revision-progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.revision-progress-text,
+.revision-topic-text {
+  color: black;
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.revision-progress-track {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  background: #FBFEFF;
+  border-radius: 2px;
+}
+
+.revision-progress-fill {
+  height: 100%;
+  background: #6750A4;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.revision-progress-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: #6750A4;
+  border-radius: 50%;
+  transition: left 0.3s ease;
+}
+
+/* Flashcard */
+.revision-flashcard-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 573px;
+  flex: 1;
+  min-height: 0;
+}
+
+.revision-flashcard-badge {
+  background: #C5E0E9;
+  border-radius: 35px;
+  padding: 10px 30px;
+  font-size: 20px;
+  font-weight: 400;
+  color: black;
+  margin-bottom: -20px;
+  z-index: 2;
+  text-align: center;
+}
+
+.revision-flashcard {
+  width: 100%;
+  min-height: 340px;
+  perspective: 800px;
+  cursor: pointer;
+}
+
+.revision-flashcard-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 340px;
+  transition: transform 0.5s ease;
+  transform-style: preserve-3d;
+}
+
+.revision-flashcard.flipped .revision-flashcard-inner {
+  transform: rotateY(180deg);
+}
+
+.revision-flashcard-front,
+.revision-flashcard-back {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-height: 340px;
+  background: white;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 30px 30px;
+  box-sizing: border-box;
+  backface-visibility: hidden;
+}
+
+.revision-flashcard-back {
+  transform: rotateY(180deg);
+}
+
+.revision-flashcard-label {
+  color: #76AFC2;
+  font-size: 20px;
+  font-weight: 400;
+  margin-bottom: 24px;
+}
+
+.revision-flashcard-question {
+  color: black;
+  font-size: 28px;
+  font-weight: 400;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.revision-flashcard-answer {
+  color: black;
+  font-size: 20px;
+  font-weight: 400;
+  text-align: center;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.revision-flashcard-hint {
+  color: #969696;
+  font-size: 20px;
+  font-weight: 400;
+  margin-bottom: 20px;
+}
+
+.revision-flashcard-divider {
+  width: 80%;
+  height: 1px;
+  background: #ADCFDB;
+  margin-bottom: 20px;
+}
+
+.revision-flip-btn {
+  background: #71AABD;
+  color: white;
+  font-size: 20px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 400;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 30px;
+  cursor: pointer;
+  outline: 1px solid #C1DDE7;
+  outline-offset: -1px;
+  transition: background 0.2s;
+}
+
+.revision-flip-btn:hover {
+  background: #5e99ab;
+}
+
+/* Bottom controls */
+.revision-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 692px;
+  flex-wrap: wrap;
+}
+
+.revision-ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #F2F4F6;
+  border: none;
+  border-radius: 10px;
+  outline: 1px solid #C1DDE7;
+  outline-offset: -1px;
+  padding: 8px 22px;
+  font-size: 16px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 400;
+  color: black;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.revision-ctrl-btn:hover:not(:disabled) {
+  background: #dde9ee;
+}
+
+.revision-ctrl-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.revision-mark-btn.marked {
+  background: #e8e0f5;
+  outline-color: #6750A4;
+}

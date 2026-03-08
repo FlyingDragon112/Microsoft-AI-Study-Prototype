@@ -8,6 +8,7 @@ import { MathJaxContext } from 'better-react-mathjax';
 import Timer from './Timer';
 import TodoList from "./TodoList";
 import Quiz from "./Quiz";
+import Revision from "./revision";
 
 const MATHJAX_CONFIG = {
   tex: {
@@ -420,7 +421,13 @@ function App() {
               <option>Revision Mode</option>
             </select>
           </div>
-          {mode === "Quiz Mode" ? <Quiz /> : <ChatBox messages={messages} onSend={handleChat} />}
+          {mode === "Quiz Mode" ? (
+            <Quiz />
+          ) : mode === "Revision Mode" ? (
+            <Revision />
+          ) : (
+            <ChatBox messages={messages} onSend={handleChat} />
+          )}
         </div>
 
         {/* Right Tools Panel */}

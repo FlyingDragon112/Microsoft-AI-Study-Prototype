@@ -1,6 +1,6 @@
 /.env
 Docs
-/backend/data
+/backend/data/filtered_dataset.csv
 node_modules
 /papers
 /backend/__pycache__

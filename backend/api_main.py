@@ -108,9 +108,9 @@ async def chat(request: ChatRequest):
         # Call get_single_question if ticked_files is not empty
         single_question_response = None
         if ticked_files:
-            #single_question_response = await get_single_question(content)
-            single_question_response = await get_user_question_info(content)
-        print("worked till here")
+            single_question_response = await get_single_question(content)
+            #single_question_response = await get_user_question_info(content)
+
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT2},
             {"role": "user", "content": f"Previous conversation:\n{context}\n\nCurrent query:"},
@@ -235,23 +235,13 @@ def extract_subject_chapter_topics(content):
     combined_context = "\n".join(context_parts)
     system_prompt = (
         "You are an expert at classifying JEE/NEET exam questions into subject, chapter, and topics. "
-        "You MUST use ONLY the exact values for subject, chapter, and topics from this JSON: "
+        "You MUST use ONLY the exact values for subject, chapter, and topics from this JSON:"
         "Given the following user query and context, do the following:\n"
         "1. Identify the most likely subject (physics, chemistry, or maths) based on keywords in the query. "
-        "   - For example, if the query mentions 'force', 'current', 'motion', 'electric', 'magnet', use 'physics'. "
-        "   - If it mentions 'atom', 'reaction', 'acid', 'bond', use 'chemistry'. "
-        "   - If it mentions 'integral', 'matrix', 'probability', 'equation', use 'maths'.\n"
         "2. Choose the most relevant chapter and topics for that subject, again using ONLY the allowed values.\n"
         "3. If the query is ambiguous, pick the most probable subject based on keywords, but NEVER guess randomly.\n"
         "4. Output STRICTLY as JSON: {\"subject\": ..., \"chapter\": ..., \"topics\": [...]}.\n"
         "5. If you cannot determine a chapter or topic, leave them as empty strings or empty lists, but NEVER invent new names.\n"
-        "Examples:\n"
-        "Query: 'Find the force on a charge in an electric field.'\n"
-        "Output: {\"subject\": \"physics\", \"chapter\": \"electrostatics\", \"topics\": [\"electric-field-and-electric-field-intensity\"]}\n"
-        "Query: 'Calculate the pH of a solution.'\n"
-        "Output: {\"subject\": \"chemistry\", \"chapter\": \"ionic-equilibrium\", \"topics\": [\"ph,-buffer-and-indicators\"]}\n"
-        "Query: 'Evaluate the integral of x^2.'\n"
-        "Output: {\"subject\": \"maths\", \"chapter\": \"indefinite-integrals\", \"topics\": [\"standard-integral\"]}\n"
         "Now, classify the following query and context:"
     )
     messages = [

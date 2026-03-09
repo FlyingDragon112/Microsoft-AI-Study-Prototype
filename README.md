@@ -1,6 +1,6 @@
 # CrackIT — AI-Powered Study Assistant
 
-CrackIT is an AI-powered study assistant that helps students understand textbook content through an interactive chat interface. Upload PDF documents, ask questions, and get detailed explanations with full LaTeX math rendering.
+CrackIT is an AI-powered study assistant that helps students understand textbook content through an interactive chat interface. Upload documents, ask questions, and get detailed explanations with full LaTeX math rendering.
 
 ## Tech Stack
 
